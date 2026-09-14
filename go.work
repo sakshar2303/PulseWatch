@@ -1,0 +1,8 @@
+go 1.22
+
+use (
+	./pkg/model
+	./collector
+	./ingestion
+	./api
+)
