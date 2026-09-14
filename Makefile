@@ -34,12 +34,16 @@ migrate-up: ## Run all pending migrations
 	@echo "Running migrations..."
 	@for f in migrations/*.up.sql; do \
 		echo "  Applying $$f"; \
-		PGPASSWORD=$${TSDB_PASSWORD:-changeme} psql \
-			-h $${TSDB_HOST:-localhost} \
-			-p $${TSDB_PORT:-5432} \
-			-U $${TSDB_USER:-pulsewatch} \
-			-d $${TSDB_DATABASE:-pulsewatch} \
-			-f $$f; \
+		if command -v psql >/dev/null 2>&1; then \
+			PGPASSWORD=$${TSDB_PASSWORD:-changeme} psql \
+				-h $${TSDB_HOST:-localhost} \
+				-p $${TSDB_PORT:-5432} \
+				-U $${TSDB_USER:-pulsewatch} \
+				-d $${TSDB_DATABASE:-pulsewatch} \
+				-f $$f; \
+		else \
+			docker exec -i pulsewatch-tsdb psql -U $${TSDB_USER:-pulsewatch} -d $${TSDB_DATABASE:-pulsewatch} < $$f; \
+		fi \
 	done
 	@echo "Migrations complete."
 
@@ -47,12 +51,16 @@ migrate-down: ## Rollback all migrations (reverse order)
 	@echo "Rolling back migrations..."
 	@for f in $$(ls -r migrations/*.down.sql); do \
 		echo "  Reverting $$f"; \
-		PGPASSWORD=$${TSDB_PASSWORD:-changeme} psql \
-			-h $${TSDB_HOST:-localhost} \
-			-p $${TSDB_PORT:-5432} \
-			-U $${TSDB_USER:-pulsewatch} \
-			-d $${TSDB_DATABASE:-pulsewatch} \
-			-f $$f; \
+		if command -v psql >/dev/null 2>&1; then \
+			PGPASSWORD=$${TSDB_PASSWORD:-changeme} psql \
+				-h $${TSDB_HOST:-localhost} \
+				-p $${TSDB_PORT:-5432} \
+				-U $${TSDB_USER:-pulsewatch} \
+				-d $${TSDB_DATABASE:-pulsewatch} \
+				-f $$f; \
+		else \
+			docker exec -i pulsewatch-tsdb psql -U $${TSDB_USER:-pulsewatch} -d $${TSDB_DATABASE:-pulsewatch} < $$f; \
+		fi \
 	done
 	@echo "Rollback complete."
 
