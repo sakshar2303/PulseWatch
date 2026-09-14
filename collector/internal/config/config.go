@@ -8,6 +8,7 @@ import (
 
 // Config holds runtime configuration for the collector agent.
 type Config struct {
+	Mode         string
 	CollectorID  string
 	Host         string
 	Service      string
@@ -16,6 +17,9 @@ type Config struct {
 	HTTPTimeout  time.Duration
 	MaxRetries   int
 	RetryBackoff time.Duration
+	NATSURL      string
+	StreamName   string
+	BufferSize   int
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -26,6 +30,7 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
+		Mode:         getEnv("COLLECTOR_MODE", "nats"),
 		CollectorID:  getEnv("COLLECTOR_ID", "collector-"+hostname),
 		Host:         getEnv("COLLECTOR_HOST", hostname),
 		Service:      getEnv("COLLECTOR_SERVICE", "system-agent"),
@@ -34,6 +39,9 @@ func Load() (*Config, error) {
 		HTTPTimeout:  getEnvDuration("COLLECTOR_HTTP_TIMEOUT", 5*time.Second),
 		MaxRetries:   getEnvInt("COLLECTOR_MAX_RETRIES", 3),
 		RetryBackoff: getEnvDuration("COLLECTOR_RETRY_BACKOFF", 500*time.Millisecond),
+		NATSURL:      getEnv("NATS_URL", "nats://localhost:4222"),
+		StreamName:   getEnv("NATS_STREAM_NAME", "METRICS"),
+		BufferSize:   getEnvInt("COLLECTOR_BUFFER_SIZE", 5000),
 	}
 
 	return cfg, nil

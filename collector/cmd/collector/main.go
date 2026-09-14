@@ -11,7 +11,37 @@ import (
 	"github.com/sakshar2303/pulsewatch/collector/internal/client"
 	"github.com/sakshar2303/pulsewatch/collector/internal/config"
 	"github.com/sakshar2303/pulsewatch/collector/internal/metrics"
+	"github.com/sakshar2303/pulsewatch/collector/internal/publisher"
+	"github.com/sakshar2303/pulsewatch/pkg/model"
 )
+
+// MetricSender abstracts the delivery mechanism (NATS or HTTP).
+type MetricSender interface {
+	Send(ctx context.Context, points []model.MetricPoint) error
+	Close()
+}
+
+type httpSender struct {
+	client *client.HTTPClient
+}
+
+func (h *httpSender) Send(ctx context.Context, points []model.MetricPoint) error {
+	return h.client.SendMetrics(ctx, points)
+}
+
+func (h *httpSender) Close() {}
+
+type natsSender struct {
+	pub *publisher.JetStreamPublisher
+}
+
+func (n *natsSender) Send(ctx context.Context, points []model.MetricPoint) error {
+	return n.pub.Publish(ctx, points)
+}
+
+func (n *natsSender) Close() {
+	n.pub.Close()
+}
 
 func main() {
 	log.Println("[INFO] Starting PulseWatch Collector Agent...")
@@ -21,45 +51,56 @@ func main() {
 		log.Fatalf("[FATAL] Failed to load configuration: %v", err)
 	}
 
-	log.Printf("[INFO] Configured collector: id=%s host=%s service=%s interval=%s endpoint=%s",
-		cfg.CollectorID, cfg.Host, cfg.Service, cfg.Interval, cfg.IngestionURL)
+	log.Printf("[INFO] Configured collector: id=%s host=%s service=%s interval=%s mode=%s",
+		cfg.CollectorID, cfg.Host, cfg.Service, cfg.Interval, cfg.Mode)
+
+	var sender MetricSender
+
+	if cfg.Mode == "http" {
+		log.Printf("[INFO] Using HTTP transport targeting %s", cfg.IngestionURL)
+		httpClient := client.NewHTTPClient(cfg.IngestionURL, cfg.HTTPTimeout, cfg.RetryBackoff, cfg.MaxRetries)
+		sender = &httpSender{client: httpClient}
+	} else {
+		log.Printf("[INFO] Using NATS JetStream transport connecting to %s (stream: %s)", cfg.NATSURL, cfg.StreamName)
+		jsPub, err := publisher.NewJetStreamPublisher(cfg.NATSURL, cfg.StreamName, "metrics.>", cfg.BufferSize)
+		if err != nil {
+			log.Fatalf("[FATAL] Failed to initialize NATS publisher: %v", err)
+		}
+		sender = &natsSender{pub: jsPub}
+	}
+	defer sender.Close()
 
 	collector := metrics.NewSystemCollector(cfg.Host, cfg.Service, cfg.CollectorID)
-	httpClient := client.NewHTTPClient(cfg.IngestionURL, cfg.HTTPTimeout, cfg.RetryBackoff, cfg.MaxRetries)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Capture OS interrupt signals for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	ticker := time.NewTicker(cfg.Interval)
 	defer ticker.Stop()
 
-	// Run initial collection immediately
-	collectAndSend(ctx, collector, httpClient)
+	// Initial collection
+	collectAndSend(ctx, collector, sender)
 
-	log.Printf("[INFO] Collector agent running on %s ticker. Press Ctrl+C to terminate.", cfg.Interval)
+	log.Printf("[INFO] Collector agent running on %s ticker (%s mode). Press Ctrl+C to terminate.", cfg.Interval, cfg.Mode)
 
 	for {
 		select {
 		case <-ticker.C:
-			collectAndSend(ctx, collector, httpClient)
+			collectAndSend(ctx, collector, sender)
 
 		case sig := <-sigChan:
 			log.Printf("[INFO] Received signal %s. Shutting down collector gracefully...", sig)
-			// Allow in-flight operations a small grace window
-			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer shutdownCancel()
-			_ = shutdownCtx
+			sender.Close()
 			log.Println("[INFO] Collector agent stopped cleanly.")
 			return
 		}
 	}
 }
 
-func collectAndSend(ctx context.Context, c *metrics.SystemCollector, cl *client.HTTPClient) {
+func collectAndSend(ctx context.Context, c *metrics.SystemCollector, s MetricSender) {
 	start := time.Now()
 	points, err := c.Collect(ctx)
 	if err != nil {
@@ -67,11 +108,11 @@ func collectAndSend(ctx context.Context, c *metrics.SystemCollector, cl *client.
 		return
 	}
 
-	err = cl.SendMetrics(ctx, points)
+	err = s.Send(ctx, points)
 	if err != nil {
-		log.Printf("[ERROR] Failed to send %d metric points to ingestion: %v", len(points), err)
+		log.Printf("[WARN] Metric delivery notice: %v", err)
 		return
 	}
 
-	log.Printf("[INFO] Successfully sent %d metric points (took %s)", len(points), time.Since(start).Round(time.Millisecond))
+	log.Printf("[INFO] Successfully delivered %d metric points (took %s)", len(points), time.Since(start).Round(time.Millisecond))
 }

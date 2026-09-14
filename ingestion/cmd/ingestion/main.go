@@ -12,6 +12,7 @@ import (
 
 	"github.com/sakshar2303/pulsewatch/ingestion/internal/batcher"
 	"github.com/sakshar2303/pulsewatch/ingestion/internal/config"
+	"github.com/sakshar2303/pulsewatch/ingestion/internal/consumer"
 	"github.com/sakshar2303/pulsewatch/ingestion/internal/handler"
 	"github.com/sakshar2303/pulsewatch/ingestion/internal/writer"
 )
@@ -36,9 +37,30 @@ func main() {
 	defer tsWriter.Close()
 	log.Println("[INFO] Connected to TimescaleDB successfully.")
 
-	// Initialize in-memory batch accumulator
+	// Initialize in-memory batch accumulator for HTTP endpoints
 	metricBatcher := batcher.New(tsWriter, cfg.BatchSize, cfg.BatchTimeout, 10000)
 	defer metricBatcher.Stop()
+
+	// Initialize NATS JetStream pull consumer if enabled
+	var jsConsumer *consumer.JetStreamConsumer
+	if cfg.EnableNATS {
+		log.Printf("[INFO] Initializing JetStream consumer from %s (stream: %s, consumer: %s)...",
+			cfg.NATSURL, cfg.StreamName, cfg.ConsumerName)
+		jsConsumer, err = consumer.NewJetStreamConsumer(
+			cfg.NATSURL,
+			cfg.StreamName,
+			cfg.ConsumerName,
+			"metrics.>",
+			tsWriter,
+			cfg.ConsumerBatchSize,
+			cfg.ConsumerFetchTimeout,
+		)
+		if err != nil {
+			log.Fatalf("[FATAL] Failed to initialize JetStream consumer: %v", err)
+		}
+		defer jsConsumer.Stop()
+		jsConsumer.Start(ctx)
+	}
 
 	// Set up HTTP multiplexer
 	mux := http.NewServeMux()
@@ -61,7 +83,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("[INFO] Ingestion service listening on port %s...", cfg.Port)
+		log.Printf("[INFO] Ingestion HTTP server listening on port %s...", cfg.Port)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("[FATAL] Ingestion server crashed: %v", err)
 		}
@@ -70,7 +92,13 @@ func main() {
 	sig := <-sigChan
 	log.Printf("[INFO] Received signal %s. Initiating graceful shutdown...", sig)
 
-	// Shutdown HTTP server first to reject new requests
+	// Stop JetStream consumer first to cease pulling new queue messages
+	if jsConsumer != nil {
+		log.Println("[INFO] Stopping JetStream consumer and completing active batch...")
+		jsConsumer.Stop()
+	}
+
+	// Shutdown HTTP server next to reject new incoming HTTP requests
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
@@ -78,7 +106,7 @@ func main() {
 		log.Printf("[ERROR] Ingestion server shutdown error: %v", err)
 	}
 
-	// Drain and flush pending points in the batcher
+	// Drain and flush pending points in the HTTP batcher
 	log.Println("[INFO] Draining batcher queue and flushing in-flight metrics...")
 	metricBatcher.Stop()
 

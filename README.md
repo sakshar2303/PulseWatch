@@ -184,8 +184,8 @@ A metric point flowing through the system:
 ## Build Phases
 
 - [x] **Phase 0** — Design: Architecture, data model, API contracts, project scaffold
-- [ ] **Phase 1** — Core Pipeline: Collector → NATS → Ingestion → TimescaleDB → Query API
-- [ ] **Phase 2** — Scale: Backpressure handling, load testing, multiple collectors
+- [x] **Phase 1** — Core Pipeline: Collector → Direct Ingestion → TimescaleDB → Query API
+- [x] **Phase 2** — Scale: NATS JetStream queue, backpressure handling, load testing, multiple collectors
 - [ ] **Phase 3** — Dashboard: Live mission-control UI with real-time charts
 - [ ] **Phase 4** — Alerting + ML: Threshold alerts, Isolation Forest anomaly detection
 - [ ] **Phase 5** — Infra: Docker, Kubernetes, CI/CD, Terraform
@@ -195,7 +195,16 @@ A metric point flowing through the system:
 
 ## Load Test Results
 
-> TODO: Phase 2 — will document events/sec, latency percentiles, and failure modes under load.
+Full details and latency distributions are documented in [docs/load_test_results.md](docs/load_test_results.md).
+
+### Summary Benchmarks (Synthetic Load Generator)
+
+| Benchmark | Mode | Concurrency | Aggregate Rate | Throughput Handled | Loss Rate | p50 Latency | p99 Latency |
+|---|---|---|---|---|---|---|---|
+| **Moderate Load** | Direct HTTP | 20 hosts | 2,000 pts/sec | 1,979.61 pts/sec | 0.85% | 1.08 ms | 6.20 ms |
+| **Moderate Load** | NATS JetStream | 20 hosts | 2,000 pts/sec | 1,979.64 pts/sec | 1.00% | 11.23 ms | 18.16 ms |
+| **High Burst** | Direct HTTP | 50 hosts | 10,000 pts/sec | 9,898.53 pts/sec | 0.90% | 1.85 ms | 6.01 ms |
+| **High Burst** | NATS JetStream | 50 hosts | 10,000 pts/sec | 9,898.54 pts/sec | 1.00% | 19.58 ms | 30.02 ms |
 
 ---
 
