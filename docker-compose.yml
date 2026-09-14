@@ -1,0 +1,65 @@
+# ==============================================================================
+# PulseWatch — Local Development Infrastructure
+# ==============================================================================
+# This compose file starts ONLY infrastructure dependencies (TimescaleDB, NATS).
+# Application services (collector, ingestion, api, detector, dashboard) are run
+# locally during development for faster iteration. A full-stack compose file
+# will be added in Phase 5 for containerized deployment.
+# ==============================================================================
+
+services:
+  # ============================================================================
+  # TimescaleDB — Time-series storage
+  # ============================================================================
+  # TimescaleDB extends PostgreSQL with hypertables optimized for time-series
+  # workloads. We use it instead of raw Postgres for automatic time-based
+  # partitioning, built-in compression, and continuous aggregates.
+  # ============================================================================
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: pulsewatch-tsdb
+    ports:
+      - "${TSDB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${TSDB_USER:-pulsewatch}
+      POSTGRES_PASSWORD: ${TSDB_PASSWORD:-changeme}
+      POSTGRES_DB: ${TSDB_DATABASE:-pulsewatch}
+    volumes:
+      - tsdb_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TSDB_USER:-pulsewatch} -d ${TSDB_DATABASE:-pulsewatch}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================================
+  # NATS — Message queue with JetStream
+  # ============================================================================
+  # NATS with JetStream enabled provides persistent, at-least-once delivery
+  # between collector agents and the ingestion service. JetStream is configured
+  # via the command flag; stream/consumer setup happens in application code.
+  # ============================================================================
+  nats:
+    image: nats:latest
+    container_name: pulsewatch-nats
+    ports:
+      - "4222:4222"   # Client connections
+      - "8222:8222"   # HTTP monitoring
+    command: ["--jetstream", "--store_dir", "/data", "--http_port", "8222"]
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  tsdb_data:
+    driver: local
+  nats_data:
+    driver: local

@@ -1,0 +1,67 @@
+# PulseWatch — Compiled/generated
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go
+vendor/
+*.mod.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Node / React
+node_modules/
+dashboard/dist/
+dashboard/build/
+.vite/
+*.tsbuildinfo
+
+# Environment / Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+!*.tfvars.example
+
+# Data / Logs
+*.log
+data/
+tmp/
+
+# ML models (too large for git)
+detector/app/models/saved/
+*.joblib
+*.pkl
