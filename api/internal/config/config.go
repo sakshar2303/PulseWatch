@@ -12,6 +12,7 @@ type Config struct {
 	DBMaxConns   int32
 	DBMinConns   int32
 	CORSOrigins  string
+	NATSURL      string
 }
 
 // Load reads configuration from environment variables.
@@ -22,6 +23,7 @@ func Load() (*Config, error) {
 		DBMaxConns:  int32(getEnvInt("API_DB_MAX_CONNS", 20)),
 		DBMinConns:  int32(getEnvInt("API_DB_MIN_CONNS", 5)),
 		CORSOrigins: getEnv("API_CORS_ORIGINS", "*"),
+		NATSURL:      getEnv("NATS_URL", "nats://localhost:4222"),
 	}, nil
 }
 

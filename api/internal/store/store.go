@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -28,11 +29,48 @@ type QueryResult struct {
 	Series     []SeriesResult `json:"series"`
 }
 
+// ServiceInfo represents a service with health status and host count.
+type ServiceInfo struct {
+	Name      string    `json:"name"`
+	LastSeen  time.Time `json:"last_seen"`
+	HostCount int       `json:"host_count"`
+	Status    string    `json:"status"`
+}
+
+// HostInfo represents a monitored host with its service and status.
+type HostInfo struct {
+	Name     string    `json:"name"`
+	Service  string    `json:"service"`
+	LastSeen time.Time `json:"last_seen"`
+	Status   string    `json:"status"`
+}
+
+// Anomaly represents a detected threshold or ML anomaly.
+type Anomaly struct {
+	ID          int64          `json:"id"`
+	DetectedAt  time.Time      `json:"detected_at"`
+	MetricName  string         `json:"metric_name"`
+	Host        string         `json:"host"`
+	Service     string         `json:"service"`
+	Severity    string         `json:"severity"`
+	Type        string         `json:"type"`
+	Description string         `json:"description"`
+	Value       float64        `json:"value"`
+	Threshold   *float64       `json:"threshold,omitempty"`
+	Score       *float64       `json:"score,omitempty"`
+	ResolvedAt  *time.Time     `json:"resolved_at,omitempty"`
+	Metadata    map[string]any `json:"metadata"`
+}
+
 // Store defines database operations required by the Query API.
 type Store interface {
 	GetMetricNames(ctx context.Context) ([]string, error)
 	QueryRaw(ctx context.Context, name string, start, end time.Time, service, host string) (*QueryResult, error)
 	QueryBucket(ctx context.Context, name string, start, end time.Time, step, agg, service, host string) (*QueryResult, error)
+	GetServices(ctx context.Context) ([]ServiceInfo, error)
+	GetHosts(ctx context.Context) ([]HostInfo, error)
+	GetAnomalies(ctx context.Context, service, severity string, resolved *bool, limit, offset int) ([]Anomaly, int, error)
+	ResolveAnomaly(ctx context.Context, id int64) error
 	Ping(ctx context.Context) error
 	Close()
 }
@@ -243,6 +281,200 @@ func (s *PgxStore) QueryBucket(ctx context.Context, name string, start, end time
 	}
 
 	return result, nil
+}
+
+// GetServices returns all distinct services with last seen time and host count.
+func (s *PgxStore) GetServices(ctx context.Context) ([]ServiceInfo, error) {
+	query := `
+		SELECT service, MAX(time) AS last_seen, COUNT(DISTINCT host) AS host_count
+		FROM metrics
+		GROUP BY service
+		ORDER BY service ASC;
+	`
+	rows, err := s.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query services: %w", err)
+	}
+	defer rows.Close()
+
+	var services []ServiceInfo
+	now := time.Now().UTC()
+
+	for rows.Next() {
+		var svc ServiceInfo
+		if err := rows.Scan(&svc.Name, &svc.LastSeen, &svc.HostCount); err != nil {
+			return nil, fmt.Errorf("failed to scan service row: %w", err)
+		}
+		svc.LastSeen = svc.LastSeen.UTC()
+
+		diff := now.Sub(svc.LastSeen)
+		if diff <= 90*time.Second {
+			svc.Status = "healthy"
+		} else if diff <= 10*time.Minute {
+			svc.Status = "warning"
+		} else {
+			svc.Status = "offline"
+		}
+
+		services = append(services, svc)
+	}
+
+	if services == nil {
+		services = []ServiceInfo{}
+	}
+	return services, nil
+}
+
+// GetHosts returns all distinct hosts with service, last seen time, and health status.
+func (s *PgxStore) GetHosts(ctx context.Context) ([]HostInfo, error) {
+	query := `
+		SELECT host, service, MAX(time) AS last_seen
+		FROM metrics
+		GROUP BY host, service
+		ORDER BY host ASC;
+	`
+	rows, err := s.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query hosts: %w", err)
+	}
+	defer rows.Close()
+
+	var hosts []HostInfo
+	now := time.Now().UTC()
+
+	for rows.Next() {
+		var h HostInfo
+		if err := rows.Scan(&h.Name, &h.Service, &h.LastSeen); err != nil {
+			return nil, fmt.Errorf("failed to scan host row: %w", err)
+		}
+		h.LastSeen = h.LastSeen.UTC()
+
+		diff := now.Sub(h.LastSeen)
+		if diff <= 90*time.Second {
+			h.Status = "healthy"
+		} else if diff <= 10*time.Minute {
+			h.Status = "warning"
+		} else {
+			h.Status = "offline"
+		}
+
+		hosts = append(hosts, h)
+	}
+
+	if hosts == nil {
+		hosts = []HostInfo{}
+	}
+	return hosts, nil
+}
+
+// GetAnomalies queries anomalies with filtering, pagination, and total count.
+func (s *PgxStore) GetAnomalies(ctx context.Context, service, severity string, resolved *bool, limit, offset int) ([]Anomaly, int, error) {
+	var whereClauses []string
+	var args []any
+	argIdx := 1
+
+	if service != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("service = $%d", argIdx))
+		args = append(args, service)
+		argIdx++
+	}
+
+	if severity != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("severity = $%d", argIdx))
+		args = append(args, severity)
+		argIdx++
+	}
+
+	if resolved != nil {
+		if *resolved {
+			whereClauses = append(whereClauses, "resolved_at IS NOT NULL")
+		} else {
+			whereClauses = append(whereClauses, "resolved_at IS NULL")
+		}
+	}
+
+	whereSQL := ""
+	if len(whereClauses) > 0 {
+		whereSQL = " WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	// 1. Get total count
+	countQuery := "SELECT COUNT(*) FROM anomalies" + whereSQL + ";"
+	var total int
+	if err := s.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("failed to count anomalies: %w", err)
+	}
+
+	// 2. Fetch paginated records
+	if limit <= 0 {
+		limit = 50
+	} else if limit > 200 {
+		limit = 200
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	selectQuery := fmt.Sprintf(`
+		SELECT id, detected_at, metric_name, host, service, severity, type, description, value, threshold, score, resolved_at, metadata
+		FROM anomalies
+		%s
+		ORDER BY detected_at DESC
+		LIMIT $%d OFFSET $%d;
+	`, whereSQL, argIdx, argIdx+1)
+
+	argsWithPaging := append(args, limit, offset)
+	rows, err := s.pool.Query(ctx, selectQuery, argsWithPaging...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to query anomalies: %w", err)
+	}
+	defer rows.Close()
+
+	var anomalies []Anomaly
+	for rows.Next() {
+		var a Anomaly
+		var rawMeta []byte
+
+		if err := rows.Scan(
+			&a.ID, &a.DetectedAt, &a.MetricName, &a.Host, &a.Service,
+			&a.Severity, &a.Type, &a.Description, &a.Value,
+			&a.Threshold, &a.Score, &a.ResolvedAt, &rawMeta,
+		); err != nil {
+			return nil, 0, fmt.Errorf("failed to scan anomaly row: %w", err)
+		}
+
+		a.DetectedAt = a.DetectedAt.UTC()
+		if a.ResolvedAt != nil {
+			t := a.ResolvedAt.UTC()
+			a.ResolvedAt = &t
+		}
+
+		if len(rawMeta) > 0 {
+			_ = json.Unmarshal(rawMeta, &a.Metadata)
+		}
+		if a.Metadata == nil {
+			a.Metadata = make(map[string]any)
+		}
+
+		anomalies = append(anomalies, a)
+	}
+
+	if anomalies == nil {
+		anomalies = []Anomaly{}
+	}
+	return anomalies, total, nil
+}
+
+// ResolveAnomaly sets resolved_at = NOW() for the specified anomaly.
+func (s *PgxStore) ResolveAnomaly(ctx context.Context, id int64) error {
+	cmd, err := s.pool.Exec(ctx, "UPDATE anomalies SET resolved_at = NOW() WHERE id = $1;", id)
+	if err != nil {
+		return fmt.Errorf("failed to resolve anomaly: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return fmt.Errorf("anomaly not found with id %d", id)
+	}
+	return nil
 }
 
 // Ping verifies database connectivity.

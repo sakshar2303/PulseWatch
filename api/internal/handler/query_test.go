@@ -31,6 +31,22 @@ func (m *mockStore) QueryBucket(ctx context.Context, name string, start, end tim
 	return m.bucketResult, m.err
 }
 
+func (m *mockStore) GetServices(ctx context.Context) ([]store.ServiceInfo, error) {
+	return nil, m.err
+}
+
+func (m *mockStore) GetHosts(ctx context.Context) ([]store.HostInfo, error) {
+	return nil, m.err
+}
+
+func (m *mockStore) GetAnomalies(ctx context.Context, service, severity string, resolved *bool, limit, offset int) ([]store.Anomaly, int, error) {
+	return nil, 0, m.err
+}
+
+func (m *mockStore) ResolveAnomaly(ctx context.Context, id int64) error {
+	return m.err
+}
+
 func (m *mockStore) Ping(ctx context.Context) error {
 	return m.err
 }

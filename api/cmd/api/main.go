@@ -14,6 +14,7 @@ import (
 	"github.com/sakshar2303/pulsewatch/api/internal/handler"
 	"github.com/sakshar2303/pulsewatch/api/internal/middleware"
 	"github.com/sakshar2303/pulsewatch/api/internal/store"
+	"github.com/sakshar2303/pulsewatch/api/internal/websocket"
 )
 
 func main() {
@@ -36,15 +37,30 @@ func main() {
 	defer dbStore.Close()
 	log.Println("[INFO] Connected to TimescaleDB successfully.")
 
+	// Initialize WebSocket hub for live streaming
+	wsHub := websocket.NewHub(cfg.NATSURL)
+	go wsHub.Run()
+	defer wsHub.Close()
+
 	// Set up router
 	mux := http.NewServeMux()
 	queryHandler := handler.NewQueryHandler(dbStore)
 	namesHandler := handler.NewNamesHandler(dbStore)
 	healthHandler := handler.NewHealthHandler(dbStore)
+	servicesHandler := handler.NewServicesHandler(dbStore)
+	hostsHandler := handler.NewHostsHandler(dbStore)
+	anomaliesHandler := handler.NewAnomaliesHandler(dbStore)
+	wsHandler := websocket.NewHandler(wsHub)
 
 	mux.HandleFunc("GET /health", healthHandler.HandleHealth)
 	mux.HandleFunc("GET /api/v1/metrics/names", namesHandler.HandleNames)
 	mux.HandleFunc("GET /api/v1/metrics/query", queryHandler.HandleQuery)
+	mux.HandleFunc("GET /api/v1/services", servicesHandler.HandleServices)
+	mux.HandleFunc("GET /api/v1/hosts", hostsHandler.HandleHosts)
+	mux.HandleFunc("GET /api/v1/anomalies", anomaliesHandler.HandleList)
+	mux.HandleFunc("PATCH /api/v1/anomalies/{id}/resolve", anomaliesHandler.HandleResolve)
+	mux.HandleFunc("POST /api/v1/anomalies/{id}/resolve", anomaliesHandler.HandleResolve)
+	mux.HandleFunc("GET /ws/live", wsHandler.ServeWS)
 
 	// Wrap router with CORS middleware
 	corsMiddleware := middleware.CORS(cfg.CORSOrigins)
