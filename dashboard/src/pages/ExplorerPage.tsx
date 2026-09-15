@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MetricChart } from '../components/charts/MetricChart';
 import { useMetrics, TIME_RANGE_CONFIGS } from '../hooks/useMetrics';
 import { TimeRangePreset, HostInfo, ServiceInfo } from '../types';
-import { Sliders, Database } from 'lucide-react';
+import { Sliders, Database, ChevronDown } from 'lucide-react';
 
 interface ExplorerPageProps {
   availableMetrics: string[];
@@ -80,31 +80,37 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({
           {/* Metric Selector */}
           <div>
             <label className="text-xs font-mono text-slate-400 block mb-1">Metric</label>
-            <select
-              value={metricName}
-              onChange={(e) => setMetricName(e.target.value)}
-              className="w-full bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-neon-cyan/50 font-mono"
-            >
-              {availableMetrics.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={metricName}
+                onChange={(e) => setMetricName(e.target.value)}
+                className="w-full appearance-none bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg pl-3 pr-8 py-2 outline-none focus:border-neon-cyan/50 font-mono cursor-pointer"
+              >
+                {availableMetrics.map((m) => (
+                  <option key={m} value={m} className="bg-[#0D0F12] text-white">
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
 
           {/* Aggregator */}
           <div>
             <label className="text-xs font-mono text-slate-400 block mb-1">Aggregation</label>
-            <select
-              value={agg}
-              onChange={(e) => setAgg(e.target.value as any)}
-              className="w-full bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-neon-cyan/50 font-mono"
-            >
-              <option value="avg">avg (Mean)</option>
-              <option value="max">max (Peak)</option>
-              <option value="min">min (Trough)</option>
-            </select>
+            <div className="relative">
+              <select
+                value={agg}
+                onChange={(e) => setAgg(e.target.value as any)}
+                className="w-full appearance-none bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg pl-3 pr-8 py-2 outline-none focus:border-neon-cyan/50 font-mono cursor-pointer"
+              >
+                <option value="avg" className="bg-[#0D0F12] text-white">avg (Mean)</option>
+                <option value="max" className="bg-[#0D0F12] text-white">max (Peak)</option>
+                <option value="min" className="bg-[#0D0F12] text-white">min (Trough)</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
 
           {/* Downsampling Step */}
@@ -122,31 +128,37 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({
           {/* Host Filter */}
           <div>
             <label className="text-xs font-mono text-slate-400 block mb-1">Host Filter</label>
-            <select
-              value={localHost}
-              onChange={(e) => setLocalHost(e.target.value)}
-              className="w-full bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-neon-cyan/50 font-mono"
-            >
-              <option value="">All Hosts</option>
-              {hosts.map((h) => (
-                <option key={h.name} value={h.name}>{h.name}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={localHost}
+                onChange={(e) => setLocalHost(e.target.value)}
+                className="w-full appearance-none bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg pl-3 pr-8 py-2 outline-none focus:border-neon-cyan/50 font-mono cursor-pointer"
+              >
+                <option value="" className="bg-[#0D0F12] text-white">All Hosts</option>
+                {hosts.map((h) => (
+                  <option key={h.name} value={h.name} className="bg-[#0D0F12] text-white">{h.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
 
           {/* Service Filter */}
           <div>
             <label className="text-xs font-mono text-slate-400 block mb-1">Service Filter</label>
-            <select
-              value={localService}
-              onChange={(e) => setLocalService(e.target.value)}
-              className="w-full bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-neon-cyan/50 font-mono"
-            >
-              <option value="">All Services</option>
-              {services.map((s) => (
-                <option key={s.name} value={s.name}>{s.name}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={localService}
+                onChange={(e) => setLocalService(e.target.value)}
+                className="w-full appearance-none bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg pl-3 pr-8 py-2 outline-none focus:border-neon-cyan/50 font-mono cursor-pointer"
+              >
+                <option value="" className="bg-[#0D0F12] text-white">All Services</option>
+                {services.map((s) => (
+                  <option key={s.name} value={s.name} className="bg-[#0D0F12] text-white">{s.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
 
           {/* Refresh Action */}

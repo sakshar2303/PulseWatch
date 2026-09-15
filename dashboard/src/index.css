@@ -5,12 +5,20 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: dark;
+  }
   body {
     background-color: #08090A;
     color: #f7f8f8;
     font-family: 'Geist', 'Inter', system-ui, sans-serif;
     overflow-x: hidden;
     letter-spacing: -0.011em;
+  }
+  select, option {
+    color-scheme: dark;
+    background-color: #0D0F12;
+    color: #f7f8f8;
   }
 }
 

@@ -13,6 +13,7 @@ import {
   Sparkles,
   Cpu,
   Zap,
+  ChevronDown,
 } from 'lucide-react';
 import { HostInfo, ServiceInfo } from '../../types';
 
@@ -128,35 +129,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Host Filter */}
           <div className="px-3 space-y-1">
             <label className="text-[11px] text-pulse-tertiary font-mono block">Host</label>
-            <select
-              value={selectedHost}
-              onChange={(e) => onHostChange(e.target.value)}
-              className="w-full bg-void-card border border-white/[0.08] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-pulse-coral/50 font-mono"
-            >
-              <option value="">All Hosts ({hosts.length})</option>
-              {hosts.map((h) => (
-                <option key={h.name} value={h.name}>
-                  {h.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={selectedHost}
+                onChange={(e) => onHostChange(e.target.value)}
+                className="w-full appearance-none bg-[#0D0F12] border border-white/[0.1] text-white text-xs rounded-lg pl-2.5 pr-8 py-2 outline-none focus:border-pulse-coral/50 font-mono cursor-pointer transition-colors hover:border-white/20"
+              >
+                <option value="" className="bg-[#0D0F12] text-white">All Hosts ({hosts.length})</option>
+                {hosts.map((h) => (
+                  <option key={h.name} value={h.name} className="bg-[#0D0F12] text-white">
+                    {h.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-pulse-tertiary absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
 
           {/* Service Filter */}
           <div className="px-3 space-y-1">
             <label className="text-[11px] text-pulse-tertiary font-mono block">Service</label>
-            <select
-              value={selectedService}
-              onChange={(e) => onServiceChange(e.target.value)}
-              className="w-full bg-void-card border border-white/[0.08] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-pulse-coral/50 font-mono"
-            >
-              <option value="">All Services ({services.length})</option>
-              {services.map((s) => (
-                <option key={s.name} value={s.name}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={selectedService}
+                onChange={(e) => onServiceChange(e.target.value)}
+                className="w-full appearance-none bg-[#0D0F12] border border-white/[0.1] text-white text-xs rounded-lg pl-2.5 pr-8 py-2 outline-none focus:border-pulse-coral/50 font-mono cursor-pointer transition-colors hover:border-white/20"
+              >
+                <option value="" className="bg-[#0D0F12] text-white">All Services ({services.length})</option>
+                {services.map((s) => (
+                  <option key={s.name} value={s.name} className="bg-[#0D0F12] text-white">
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-pulse-tertiary absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
