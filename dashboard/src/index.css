@@ -73,9 +73,47 @@
   50%       { transform: translateY(-6px); }
 }
 
+@keyframes blob-float-1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33%       { transform: translate(40px, -60px) scale(1.12); }
+  66%       { transform: translate(-30px, 30px) scale(0.92); }
+}
+
+@keyframes blob-float-2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33%       { transform: translate(-50px, 40px) scale(1.08); }
+  66%       { transform: translate(35px, -45px) scale(0.95); }
+}
+
+@keyframes scanline {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  50%  { opacity: 0.6; }
+  100% { transform: translateY(1000%); opacity: 0; }
+}
+
+@keyframes data-flow {
+  0%   { stroke-dashoffset: 40; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.95); opacity: 0.8; }
+  50%  { transform: scale(1.15); opacity: 0.2; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .animate-fade-in      { animation: fade-in 0.4s cubic-bezier(0.4,0,0.2,1) both; }
 .animate-slide-right  { animation: slide-in-right 0.35s cubic-bezier(0.4,0,0.2,1) both; }
 .animate-float        { animation: float 4s ease-in-out infinite; }
+.animate-blob-1       { animation: blob-float-1 18s ease-in-out infinite; }
+.animate-blob-2       { animation: blob-float-2 22s ease-in-out infinite; }
+.animate-spin-slow    { animation: spin-slow 30s linear infinite; }
+.animate-data-flow    { stroke-dasharray: 6 6; animation: data-flow 1.2s linear infinite; }
 
 .shimmer {
   background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
@@ -85,7 +123,24 @@
 
 .grid-pattern {
   background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.cyber-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.glow-box-coral {
+  box-shadow: 0 0 35px -5px rgba(232, 106, 56, 0.35), 0 0 10px rgba(232, 106, 56, 0.2);
+}
+
+.glow-box-sky {
+  box-shadow: 0 0 35px -5px rgba(56, 189, 248, 0.35), 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.glow-box-emerald {
+  box-shadow: 0 0 35px -5px rgba(52, 211, 153, 0.35), 0 0 10px rgba(52, 211, 153, 0.2);
 }

@@ -1,4 +1,4 @@
-import { RefreshCw, ExternalLink, Search } from 'lucide-react';
+import { RefreshCw, ExternalLink, Search, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { HealthResponse, TimeRangePreset } from '../../types';
 import { ConnectionStatus } from '../../services/websocket';
 import { TIME_RANGE_CONFIGS } from '../../hooks/useMetrics';
@@ -14,6 +14,9 @@ interface HeaderProps {
   isRefreshing: boolean;
   onOpenCommandPalette?: () => void;
   onLogoClick?: () => void;
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
+  showSidebarToggle?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +30,9 @@ export const Header: React.FC<HeaderProps> = ({
   isRefreshing,
   onOpenCommandPalette,
   onLogoClick,
+  isSidebarOpen = true,
+  onToggleSidebar,
+  showSidebarToggle = false,
 }) => {
   const tsdbHealthy = health?.dependencies?.timescaledb?.status === 'healthy';
   const natsHealthy = health?.dependencies?.nats?.status === 'healthy';
@@ -35,7 +41,22 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="h-14 border-b border-white/[0.07] bg-void/90 backdrop-blur-xl px-5 flex items-center justify-between sticky top-0 z-30">
       {/* Left: Brand & Breadcrumb */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* Sidebar Toggle Button (Fullscreen Mode) */}
+        {showSidebarToggle && onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            title={isSidebarOpen ? "Collapse sidebar / Full screen (Ctrl+B)" : "Expand sidebar (Ctrl+B)"}
+            className="p-1.5 rounded-lg bg-void-card hover:bg-void-elevated border border-white/10 hover:border-pulse-coral/40 text-pulse-secondary hover:text-white transition-all flex items-center justify-center group"
+          >
+            {isSidebarOpen ? (
+              <PanelLeftClose className="w-4 h-4 text-pulse-secondary group-hover:text-white" />
+            ) : (
+              <PanelLeftOpen className="w-4 h-4 text-pulse-coral" />
+            )}
+          </button>
+        )}
+
         {/* Brand Icon */}
         <div
           className="flex items-center gap-2.5 cursor-pointer"
@@ -44,8 +65,8 @@ export const Header: React.FC<HeaderProps> = ({
           tabIndex={0}
           onKeyDown={(e) => e.key === 'Enter' && onLogoClick?.()}
         >
-          <div className="w-7 h-7 rounded-lg bg-pulse-coral/15 border border-pulse-coral/30 flex items-center justify-center text-pulse-coral shadow-pulse-glow">
-            <span className="font-mono font-bold text-xs">PW</span>
+          <div className="w-8 h-8 rounded-lg overflow-hidden border border-pulse-coral/30 shadow-pulse-glow flex items-center justify-center bg-black">
+            <img src="/logo.jpg" alt="PulseWatch Logo" className="w-full h-full object-cover" />
           </div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm tracking-tight text-white font-sans">PulseWatch</span>

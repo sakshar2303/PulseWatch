@@ -371,6 +371,288 @@ export const AgentDiagnosticsPage: React.FC = () => {
             Detail — {selected.name}
           </div>
           <AgentDetailPanel agent={selected} />
+
+          {/* ─── Fleet Resource Summary (Detailed) ──────────────────────── */}
+          <div className="hud-panel rounded-xl p-5 border border-white/[0.07] mt-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wider text-pulse-tertiary">Fleet Resource Summary</div>
+                <div className="text-[10px] text-pulse-tertiary mt-0.5 font-mono">Aggregate view across {agents.length} active agent processes</div>
+              </div>
+              <div className="text-[10px] font-mono text-pulse-tertiary">
+                Updated: {lastRefresh.toLocaleTimeString()}
+              </div>
+            </div>
+
+            {/* Health Breakdown Bar */}
+            <div className="mb-5">
+              <div className="text-[10px] font-mono text-pulse-secondary mb-2 uppercase tracking-wide">Health Status</div>
+              <div className="flex items-center gap-1 h-3 rounded-full overflow-hidden bg-white/5">
+                {healthSummary.healthy > 0 && (
+                  <div className="h-full bg-pulse-emerald rounded-l-full transition-all duration-500" style={{ width: `${(healthSummary.healthy / agents.length) * 100}%` }} />
+                )}
+                {healthSummary.degraded > 0 && (
+                  <div className="h-full bg-pulse-amber transition-all duration-500" style={{ width: `${(healthSummary.degraded / agents.length) * 100}%` }} />
+                )}
+                {healthSummary.critical > 0 && (
+                  <div className="h-full bg-pulse-rose rounded-r-full transition-all duration-500" style={{ width: `${(healthSummary.critical / agents.length) * 100}%` }} />
+                )}
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-[10px] font-mono text-pulse-tertiary">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-pulse-emerald" />{healthSummary.healthy} Healthy ({((healthSummary.healthy / agents.length) * 100).toFixed(0)}%)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-pulse-amber" />{healthSummary.degraded} Degraded ({((healthSummary.degraded / agents.length) * 100).toFixed(0)}%)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-pulse-rose" />{healthSummary.critical} Critical ({((healthSummary.critical / agents.length) * 100).toFixed(0)}%)</span>
+              </div>
+            </div>
+
+            {/* Aggregate KPIs - 6 cards */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-5">
+              {[
+                { label: 'Total Memory', value: `${(agents.reduce((s, a) => s + a.metrics.memory.value, 0) / 1024).toFixed(2)}`, unit: 'GB', color: 'text-pulse-sky', border: 'border-pulse-sky/20' },
+                { label: 'Avg CPU', value: `${(agents.reduce((s, a) => s + a.metrics.cpu.value, 0) / agents.length).toFixed(1)}`, unit: '%', color: 'text-pulse-coral', border: 'border-pulse-coral/20' },
+                { label: 'Peak CPU', value: `${Math.max(...agents.map(a => a.metrics.cpu.value)).toFixed(1)}`, unit: '%', color: 'text-pulse-rose', border: 'border-pulse-rose/20' },
+                { label: 'Total Goroutines', value: `${agents.reduce((s, a) => s + a.metrics.goroutines.value, 0)}`, unit: '', color: 'text-neon-sky', border: 'border-neon-sky/20' },
+                { label: 'Total Conns', value: `${agents.reduce((s, a) => s + a.metrics.openConns.value, 0)}`, unit: '', color: 'text-pulse-emerald', border: 'border-pulse-emerald/20' },
+                { label: 'Avg P99', value: `${(agents.reduce((s, a) => s + a.metrics.p99.value, 0) / agents.length).toFixed(0)}`, unit: 'ms', color: 'text-neon-amber', border: 'border-neon-amber/20' },
+              ].map(({ label, value, unit, color, border }) => (
+                <div key={label} className={`p-3 rounded-xl bg-void/80 border ${border} text-center`}>
+                  <div className="text-[9px] font-mono text-pulse-tertiary uppercase mb-1">{label}</div>
+                  <div className={`text-lg font-extrabold font-mono ${color}`}>{value}<span className="text-[10px] text-pulse-tertiary ml-0.5">{unit}</span></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Per-Agent Memory Usage */}
+            <div className="mb-5">
+              <div className="text-[10px] font-mono text-pulse-secondary mb-2.5 uppercase tracking-wide">Memory Usage by Agent</div>
+              <div className="space-y-2">
+                {agents
+                  .slice()
+                  .sort((a, b) => b.metrics.memory.value - a.metrics.memory.value)
+                  .map((ag) => {
+                    const maxMem = Math.max(...agents.map(a => a.metrics.memory.value));
+                    const pct = (ag.metrics.memory.value / maxMem) * 100;
+                    const barColor = ag.metrics.memory.health === 'warn' ? 'bg-pulse-amber' : ag.status === 'critical' ? 'bg-pulse-rose' : 'bg-pulse-sky';
+                    return (
+                      <div key={ag.id}>
+                        <div className="flex items-center justify-between text-[10px] font-mono mb-0.5">
+                          <span className="text-pulse-secondary truncate">{ag.name}</span>
+                          <span className="text-white font-bold">{ag.metrics.memory.value} MB</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                          <div className={`h-full rounded-full ${barColor} transition-all duration-700`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {/* Connection Pool & GC Analysis side-by-side */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+              <div>
+                <div className="text-[10px] font-mono text-pulse-secondary mb-2.5 uppercase tracking-wide">Connection Pool Utilization</div>
+                <div className="space-y-2">
+                  {agents.map((ag) => {
+                    const maxPool = 96;
+                    const utilPct = (ag.metrics.openConns.value / maxPool) * 100;
+                    const barColor = utilPct > 80 ? 'bg-pulse-rose' : utilPct > 50 ? 'bg-pulse-amber' : 'bg-pulse-emerald';
+                    return (
+                      <div key={ag.id}>
+                        <div className="flex items-center justify-between text-[9px] font-mono mb-0.5">
+                          <span className="text-pulse-tertiary truncate">{ag.name.split('-').slice(0, 2).join('-')}</span>
+                          <span className={utilPct > 80 ? 'text-pulse-rose' : 'text-pulse-secondary'}>{ag.metrics.openConns.value}/{maxPool}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                          <div className={`h-full rounded-full ${barColor} transition-all duration-700`} style={{ width: `${Math.min(utilPct, 100)}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-mono text-pulse-secondary mb-2.5 uppercase tracking-wide">GC Pause Analysis</div>
+                <div className="space-y-2">
+                  {agents.map((ag) => {
+                    const gcVal = ag.metrics.gcPause.value;
+                    const maxGc = 5;
+                    const pct = (gcVal / maxGc) * 100;
+                    const barColor = gcVal > 3 ? 'bg-pulse-rose' : gcVal > 1.5 ? 'bg-pulse-amber' : 'bg-neon-emerald';
+                    return (
+                      <div key={ag.id}>
+                        <div className="flex items-center justify-between text-[9px] font-mono mb-0.5">
+                          <span className="text-pulse-tertiary truncate">{ag.name.split('-').slice(0, 2).join('-')}</span>
+                          <span className={gcVal > 3 ? 'text-pulse-rose' : 'text-pulse-secondary'}>{gcVal} ms</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                          <div className={`h-full rounded-full ${barColor} transition-all duration-700`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Uptime & Runtime Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-[10px] font-mono text-pulse-secondary mb-2.5 uppercase tracking-wide">Agent Uptime Ranking</div>
+                <div className="space-y-1.5">
+                  {agents
+                    .slice()
+                    .sort((a, b) => b.uptime.localeCompare(a.uptime))
+                    .map((ag, i) => (
+                      <div key={ag.id} className="flex items-center justify-between text-[10px] font-mono p-2 rounded-lg bg-void/60 border border-white/[0.04]">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-bold ${
+                            i === 0 ? 'bg-pulse-emerald/20 text-pulse-emerald' : 'bg-white/5 text-pulse-tertiary'
+                          }`}>#{i + 1}</span>
+                          <span className="text-pulse-secondary truncate">{ag.name.split('-').slice(0, 2).join('-')}</span>
+                        </div>
+                        <span className="text-pulse-emerald flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5" />
+                          {ag.uptime}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-mono text-pulse-secondary mb-2.5 uppercase tracking-wide">Runtime Environment</div>
+                <div className="space-y-1.5">
+                  {[
+                    { key: 'Go Version', val: '1.22.4' },
+                    { key: 'GOOS/ARCH', val: 'darwin/arm64' },
+                    { key: 'GOMAXPROCS', val: '10' },
+                    { key: 'GC Mode', val: 'concurrent' },
+                    { key: 'Stack Size', val: '8 KB (default)' },
+                    { key: 'Heap Profile', val: 'allocs' },
+                    { key: 'Trace Propagation', val: 'W3C traceparent' },
+                    { key: 'NATS Protocol', val: 'JetStream R1' },
+                    { key: 'DB Driver', val: 'pgx/v5 pool' },
+                    { key: 'Metric Export', val: 'OTLP/gRPC' },
+                  ].map(({ key, val }) => (
+                    <div key={key} className="flex items-center justify-between text-[10px] font-mono p-1.5 rounded-lg bg-void/60 border border-white/[0.04]">
+                      <span className="text-pulse-tertiary">{key}</span>
+                      <span className="text-pulse-secondary">{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ─── Goroutine & CPU Distribution (side-by-side) ────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
+            <div className="hud-panel rounded-xl p-4 border border-white/[0.07]">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary mb-3">
+                Goroutine Distribution
+              </div>
+              <div className="space-y-2">
+                {agents.map((ag) => {
+                  const maxGr = Math.max(...agents.map(a => a.metrics.goroutines.value));
+                  const pct = (ag.metrics.goroutines.value / maxGr) * 100;
+                  const barColor = ag.status === 'critical' ? 'bg-pulse-rose' : ag.status === 'degraded' ? 'bg-pulse-amber' : 'bg-pulse-sky';
+                  return (
+                    <div key={ag.id} className="space-y-0.5">
+                      <div className="flex items-center justify-between text-[9px] font-mono">
+                        <span className={`truncate ${ag.id === selectedId ? 'text-white' : 'text-pulse-tertiary'}`}>{ag.name.split('-').slice(0, 2).join('-')}</span>
+                        <span className="text-pulse-secondary">{ag.metrics.goroutines.value}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                        <div className={`h-full rounded-full ${barColor} transition-all duration-700`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="hud-panel rounded-xl p-4 border border-white/[0.07]">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary mb-3">
+                CPU Usage by Agent
+              </div>
+              <div className="space-y-2">
+                {agents.map((ag) => {
+                  const pct = Math.min(ag.metrics.cpu.value, 100);
+                  const barColor = pct > 70 ? 'bg-pulse-rose' : pct > 40 ? 'bg-pulse-amber' : 'bg-pulse-coral';
+                  return (
+                    <div key={ag.id} className="space-y-0.5">
+                      <div className="flex items-center justify-between text-[9px] font-mono">
+                        <span className={`truncate ${ag.id === selectedId ? 'text-white' : 'text-pulse-tertiary'}`}>{ag.name.split('-').slice(0, 2).join('-')}</span>
+                        <span className={pct > 70 ? 'text-pulse-rose' : pct > 40 ? 'text-pulse-amber' : 'text-pulse-secondary'}>{ag.metrics.cpu.value.toFixed(1)}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                        <div className={`h-full rounded-full ${barColor} transition-all duration-700`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ─── Fleet Events & Quick Actions (side-by-side) ────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="hud-panel rounded-xl p-4 border border-white/[0.07]">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary mb-3 flex items-center gap-1.5">
+                <AlertTriangle className="w-3 h-3" />
+                All Fleet Events
+              </div>
+              <div className="space-y-1.5 max-h-52 overflow-y-auto custom-scrollbar">
+                {agents
+                  .flatMap((ag) =>
+                    ag.recentEvents.map((evt) => ({ ...evt, agent: ag.name.split('-').slice(0, 2).join('-'), status: ag.status }))
+                  )
+                  .sort((a, b) => {
+                    const order = { error: 0, warn: 1, info: 2 };
+                    return order[a.level] - order[b.level];
+                  })
+                  .map((evt, i) => {
+                    const dotColor = { info: 'bg-pulse-sky', warn: 'bg-pulse-amber', error: 'bg-pulse-rose' }[evt.level];
+                    const textColor = { info: 'text-pulse-secondary', warn: 'text-pulse-amber', error: 'text-pulse-rose' }[evt.level];
+                    return (
+                      <div key={i} className="flex items-start gap-2 text-[9px] font-mono py-1 border-b border-white/[0.03] last:border-0">
+                        <span className={`w-1.5 h-1.5 rounded-full mt-0.5 shrink-0 ${dotColor}`} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-pulse-tertiary truncate">{evt.agent}</span>
+                            <span className="text-pulse-tertiary shrink-0">{evt.time}</span>
+                          </div>
+                          <div className={`${textColor} truncate`}>{evt.msg}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            <div className="hud-panel rounded-xl p-4 border border-white/[0.07]">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary mb-3">
+                Quick Actions
+              </div>
+              <div className="space-y-1.5">
+                <button onClick={refresh} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-void/80 border border-white/5 hover:border-pulse-coral/30 hover:bg-white/[0.03] transition-all text-[10px] font-mono text-pulse-secondary hover:text-white group">
+                  <RefreshCw className="w-3 h-3 text-pulse-coral group-hover:rotate-180 transition-transform duration-500" />
+                  <span>Force Refresh All Agents</span>
+                </button>
+                <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-void/80 border border-white/5 hover:border-pulse-sky/30 hover:bg-white/[0.03] transition-all text-[10px] font-mono text-pulse-secondary hover:text-white group">
+                  <GitBranch className="w-3 h-3 text-pulse-sky" />
+                  <span>Dump Goroutine Stacks</span>
+                </button>
+                <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-void/80 border border-white/5 hover:border-pulse-emerald/30 hover:bg-white/[0.03] transition-all text-[10px] font-mono text-pulse-secondary hover:text-white group">
+                  <Server className="w-3 h-3 text-pulse-emerald" />
+                  <span>Export Fleet Snapshot</span>
+                </button>
+                <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-void/80 border border-white/5 hover:border-pulse-amber/30 hover:bg-white/[0.03] transition-all text-[10px] font-mono text-pulse-secondary hover:text-white group">
+                  <Cpu className="w-3 h-3 text-pulse-amber" />
+                  <span>Trigger GC on All Agents</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

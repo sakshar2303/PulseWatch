@@ -14,6 +14,7 @@ import {
   Cpu,
   Zap,
   ChevronDown,
+  PanelLeftClose,
 } from 'lucide-react';
 import { HostInfo, ServiceInfo } from '../../types';
 
@@ -29,6 +30,7 @@ interface SidebarProps {
   selectedService: string;
   onServiceChange: (service: string) => void;
   unresolvedAnomalyCount: number;
+  onCollapse?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -41,6 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   selectedService,
   onServiceChange,
   unresolvedAnomalyCount,
+  onCollapse,
 }) => {
   const navItems = [
     { id: 'welcome', label: 'Welcome & Tour', icon: Sparkles, badgeText: 'Tour' },
@@ -67,8 +70,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-3.5 space-y-5">
         {/* Navigation Links */}
         <div className="space-y-1">
-          <div className="px-3 pb-2 text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary">
-            Diagnostics & Verifier
+          <div className="px-3 pb-2 text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary flex items-center justify-between">
+            <span>Diagnostics & Verifier</span>
+            {onCollapse && (
+              <button
+                onClick={onCollapse}
+                title="Slide sidebar inside (Ctrl+B)"
+                className="p-1 rounded hover:bg-white/5 text-pulse-tertiary hover:text-white transition-colors"
+              >
+                <PanelLeftClose className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;

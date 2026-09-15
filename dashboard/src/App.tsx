@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PanelLeftOpen } from 'lucide-react';
 import { Header } from './components/layout/Header';
 import { Sidebar, ActivePage } from './components/layout/Sidebar';
 import { OverviewPage } from './pages/OverviewPage';
@@ -20,7 +21,8 @@ import { TimeRangePreset } from './types';
 import { wsService, ConnectionStatus } from './services/websocket';
 
 export const App: React.FC = () => {
-  const [activePage, setActivePage] = useState<ActivePage>('overview');
+  const [activePage, setActivePage] = useState<ActivePage>('welcome');
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [timeRange, setTimeRange] = useState<TimeRangePreset>('1h');
   const [refreshInterval, setRefreshInterval] = useState<number>(10000);
   const [selectedHost, setSelectedHost] = useState<string>('');
@@ -55,17 +57,23 @@ export const App: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Global Cmd + K / Ctrl + K shortcut listener
+  // Global Shortcuts: Cmd+K (palette) & Cmd+B (sidebar toggle)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
       }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        if (activePage !== 'welcome') {
+          setIsSidebarOpen((prev) => !prev);
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [activePage]);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -93,25 +101,56 @@ export const App: React.FC = () => {
         isRefreshing={isRefreshing}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onLogoClick={() => setActivePage('welcome')}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+        showSidebarToggle={activePage !== 'welcome'}
       />
 
       {/* Body */}
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <Sidebar
-          activePage={activePage}
-          onPageChange={setActivePage}
-          hosts={hosts}
-          services={services}
-          selectedHost={selectedHost}
-          onHostChange={setSelectedHost}
-          selectedService={selectedService}
-          onServiceChange={setSelectedService}
-          unresolvedAnomalyCount={unresolvedCount}
-        />
+      <div className="flex flex-1 relative overflow-x-hidden">
+        {/* Sidebar with slide-in/slide-out animation */}
+        {activePage !== 'welcome' && (
+          <div
+            className={`transition-all duration-300 ease-in-out shrink-0 overflow-hidden ${
+              isSidebarOpen ? 'w-60 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-full pointer-events-none'
+            }`}
+          >
+            <Sidebar
+              activePage={activePage}
+              onPageChange={setActivePage}
+              hosts={hosts}
+              services={services}
+              selectedHost={selectedHost}
+              onHostChange={setSelectedHost}
+              selectedService={selectedService}
+              onServiceChange={setSelectedService}
+              unresolvedAnomalyCount={unresolvedCount}
+              onCollapse={() => setIsSidebarOpen(false)}
+            />
+          </div>
+        )}
+
+        {/* Floating Expand Button when sidebar is slid inside */}
+        {activePage !== 'welcome' && !isSidebarOpen && (
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            title="Expand Sidebar (Ctrl+B)"
+            className="fixed left-3 bottom-6 z-40 px-3 py-2 rounded-xl bg-void-card/95 border border-white/10 hover:border-pulse-coral/50 text-pulse-secondary hover:text-white shadow-2xl backdrop-blur-xl transition-all flex items-center gap-2 text-xs font-mono group hover:scale-105"
+          >
+            <PanelLeftOpen className="w-4 h-4 text-pulse-coral group-hover:rotate-12 transition-transform" />
+            <span>Expand Menu</span>
+            <kbd className="text-[10px] bg-white/5 px-1 py-0.5 rounded border border-white/10 text-pulse-tertiary">⌘B</kbd>
+          </button>
+        )}
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full">
+        <main
+          className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${
+            activePage === 'welcome'
+              ? 'p-0 max-w-none'
+              : 'p-6 max-w-7xl mx-auto'
+          }`}
+        >
           {activePage === 'welcome' && (
             <WelcomePage onNavigate={(p) => setActivePage(p)} />
           )}
