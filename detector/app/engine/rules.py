@@ -24,6 +24,7 @@ from typing import List, Optional
 import asyncpg
 
 from app.db.session import get_pool
+from app.engine.ai import verify_anomaly
 
 log = logging.getLogger(__name__)
 
@@ -116,6 +117,13 @@ VALUES
 RETURNING id
 """
 
+_UPDATE_VERIFICATION_SQL = """
+UPDATE anomalies 
+SET metadata = metadata || $1::jsonb,
+    resolved_at = CASE WHEN $2::boolean THEN resolved_at ELSE NOW() END
+WHERE id = $3
+"""
+
 
 # ---------------------------------------------------------------------------
 # Public evaluator
@@ -169,6 +177,8 @@ class RulesEvaluator:
             key = (row["host"], row["service"])
             groups.setdefault(key, []).append(row["value"])
 
+        self._last_evaluated_groups = groups # hack to pass values to verify task
+        
         firings: List[RuleFiring] = []
         now = datetime.now(timezone.utc)
 
@@ -223,6 +233,48 @@ class RulesEvaluator:
         )
         return anomaly_id
 
+    async def _verify_threshold_anomaly(
+        self, 
+        anomaly_id: int, 
+        firing: RuleFiring, 
+        samples: list[float]
+    ):
+        """Async task to verify threshold anomalies."""
+        import json
+        pool = await get_pool()
+        
+        # We need tuples of (timestamp, value). Since we only have values, 
+        # we'll approximate the timestamps just for the LLM context.
+        now_ts = firing.fired_at.timestamp()
+        approx_samples = []
+        for i, val in enumerate(reversed(samples)):
+            approx_samples.insert(0, (now_ts - i*60, val)) # assume 1min step roughly
+            
+        verify_result = await verify_anomaly(
+            metric=firing.rule.metric_name,
+            host=firing.host,
+            service=firing.service,
+            severity=firing.rule.severity,
+            current_value=firing.current_value,
+            threshold=firing.rule.threshold,
+            score=None,
+            samples=approx_samples,
+            description=firing.description
+        )
+
+        if verify_result:
+            is_real = verify_result.get("is_real", True)
+            meta_update = json.dumps({
+                "llm_verified": is_real,
+                "llm_reason": verify_result.get("reason", "")
+            })
+            try:
+                async with pool.acquire() as conn:
+                    await conn.execute(_UPDATE_VERIFICATION_SQL, meta_update, is_real, anomaly_id)
+                log.info("Saved LLM verification for threshold anomaly %d (is_real=%s)", anomaly_id, is_real)
+            except Exception as e:
+                log.error("Failed to save verification for anomaly %d: %s", anomaly_id, e)
+
     async def run_all(self) -> int:
         """Load all rules, evaluate each, persist firings.  Returns total firings count."""
         from app.engine.deduplicator import deduplicator
@@ -232,6 +284,7 @@ class RulesEvaluator:
         for rule in rules:
             try:
                 firings = await self.evaluate(rule)
+                firings_groups = getattr(self, '_last_evaluated_groups', {})
                 for firing in firings:
                     if deduplicator.is_duplicate(
                         firing.rule.metric_name, firing.host, firing.service, "threshold"
@@ -242,7 +295,12 @@ class RulesEvaluator:
                         )
                         continue
 
-                    await self.persist_firing(firing)
+                    anomaly_id = await self.persist_firing(firing)
+                    
+                    # Spawn async verification
+                    import asyncio
+                    asyncio.create_task(self._verify_threshold_anomaly(anomaly_id, firing, firings_groups[firing.host, firing.service]))
+                    
                     deduplicator.mark_fired(
                         firing.rule.metric_name, firing.host, firing.service, "threshold"
                     )

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Anomaly } from '../../types';
 import { resolveAnomaly } from '../../services/api';
-import { AlertOctagon, CheckCircle, Clock, Check, BrainCircuit } from 'lucide-react';
+import { AlertOctagon, CheckCircle, Clock, Check, BrainCircuit, XCircle, ShieldCheck } from 'lucide-react';
 
 interface AnomalyFeedProps {
   anomalies: Anomaly[];
@@ -119,6 +119,35 @@ export const AnomalyFeed: React.FC<AnomalyFeedProps> = ({
                     </div>
 
                     <p className="text-slate-300 text-xs">{anomaly.description}</p>
+
+                    {/* AI Verification Badge */}
+                    {anomaly.metadata?.llm_verified !== undefined && (
+                      <div className={`mt-2 p-2.5 rounded-lg border ${
+                        anomaly.metadata.llm_verified 
+                          ? 'border-emerald-500/20 bg-emerald-950/20' 
+                          : 'border-slate-500/20 bg-slate-800/50'
+                      }`}>
+                        <div className="flex items-start gap-2">
+                          {anomaly.metadata.llm_verified ? (
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" style={{ filter: 'drop-shadow(0 0 4px rgb(52 211 153 / 0.7))' }} />
+                          ) : (
+                            <XCircle className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                          )}
+                          <div>
+                            <p className={`text-[10px] font-mono font-semibold uppercase tracking-wider mb-0.5 ${
+                              anomaly.metadata.llm_verified ? 'text-emerald-400' : 'text-slate-400'
+                            }`}>
+                              {anomaly.metadata.llm_verified ? 'Verified by AI' : 'Rejected by AI (False Positive)'}
+                            </p>
+                            {anomaly.metadata.llm_reason && (
+                              <p className="text-[11px] text-slate-300 leading-relaxed">
+                                {anomaly.metadata.llm_reason}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* AI Root Cause Analysis */}
                     {anomaly.rca_summary && (

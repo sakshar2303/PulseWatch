@@ -24,7 +24,7 @@ from typing import List, Tuple
 from app.config import settings
 from app.db.session import get_pool
 from app.models.isolation_forest import model_registry
-from app.engine.ai import generate_rca_summary
+from app.engine.ai import generate_rca_summary, verify_anomaly
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +56,13 @@ RETURNING id
 
 _UPDATE_RCA_SQL = """
 UPDATE anomalies SET rca_summary = $1 WHERE id = $2
+"""
+
+_UPDATE_VERIFICATION_SQL = """
+UPDATE anomalies 
+SET metadata = metadata || $1::jsonb,
+    resolved_at = CASE WHEN $2::boolean THEN resolved_at ELSE NOW() END
+WHERE id = $3
 """
 
 
@@ -148,8 +155,8 @@ class MLDetector:
                 )
                 total_anomalies += 1
 
-                # Async RCA generation
-                asyncio.create_task(self._generate_and_save_rca(
+                # Async RCA & Verification generation
+                asyncio.create_task(self._verify_and_generate_rca(
                     anomaly_id=anomaly_id,
                     metric=metric,
                     host=host,
@@ -158,6 +165,7 @@ class MLDetector:
                     current_value=current_value,
                     score=result.score,
                     samples=samples,
+                    description=desc,
                 ))
 
             except Exception:
@@ -165,17 +173,50 @@ class MLDetector:
 
         return total_anomalies
 
-    async def _generate_and_save_rca(self, anomaly_id: int, **kwargs):
-        """Helper to generate RCA via LLM and save it to the DB without blocking."""
+    async def _verify_and_generate_rca(self, anomaly_id: int, **kwargs):
+        """Helper to generate RCA via LLM and verify anomaly without blocking."""
+        pool = await get_pool()
+        
+        # 1. Verify Anomaly
+        verify_result = await verify_anomaly(
+            metric=kwargs["metric"],
+            host=kwargs["host"],
+            service=kwargs["service"],
+            severity=kwargs["severity"],
+            current_value=kwargs["current_value"],
+            threshold=None,
+            score=kwargs["score"],
+            samples=kwargs["samples"],
+            description=kwargs["description"]
+        )
+
+        if verify_result:
+            is_real = verify_result.get("is_real", True)
+            meta_update = json.dumps({
+                "llm_verified": is_real,
+                "llm_reason": verify_result.get("reason", "")
+            })
+            try:
+                async with pool.acquire() as conn:
+                    await conn.execute(_UPDATE_VERIFICATION_SQL, meta_update, is_real, anomaly_id)
+                log.info("Saved LLM verification for anomaly %d (is_real=%s)", anomaly_id, is_real)
+            except Exception as e:
+                log.error("Failed to save verification for anomaly %d: %s", anomaly_id, e)
+            
+            # If not real, stop here
+            if not is_real:
+                return
+
+        # 2. Generate RCA (only if real or verification failed to respond)
+        kwargs.pop("description", None) # remove description before passing to RCA
         rca = await generate_rca_summary(**kwargs)
         if rca:
             try:
-                pool = await get_pool()
                 async with pool.acquire() as conn:
                     await conn.execute(_UPDATE_RCA_SQL, rca, anomaly_id)
-                log.info(f"Saved LLM RCA for anomaly {anomaly_id}")
+                log.info("Saved LLM RCA for anomaly %d", anomaly_id)
             except Exception as e:
-                log.error(f"Failed to save RCA for anomaly {anomaly_id}: {e}")
+                log.error("Failed to save RCA for anomaly %d: %s", anomaly_id, e)
 
 
 # Module-level singleton
