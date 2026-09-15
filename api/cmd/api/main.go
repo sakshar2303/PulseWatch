@@ -60,6 +60,15 @@ func main() {
 	anomaliesHandler := handler.NewAnomaliesHandler(dbStore)
 	alertsHandler := handler.NewAlertsHandler(dbStore)
 	wsHandler := websocket.NewHandler(wsHub)
+	nlQueryHandler := handler.NewNLQueryHandler(cfg.AnthropicAPIKey)
+
+	// Pre-load metric names for AI schema context (best-effort)
+	if metricNames, err := dbStore.GetMetricNames(ctx); err == nil {
+		nlQueryHandler.SetMetricNames(metricNames)
+		log.Printf("[INFO] AI NL Query handler initialized with %d known metrics.", len(metricNames))
+	} else {
+		log.Printf("[WARN] Could not pre-load metric names for NL Query: %v", err)
+	}
 
 	// SLI/SLO metrics (5-minute rolling window)
 	sliCollector := middleware.NewSLICollector(5 * time.Minute)
@@ -82,6 +91,7 @@ func main() {
 	mux.HandleFunc("POST /api/v1/alerts/rules/{id}/toggle", alertsHandler.HandleToggle)
 	mux.HandleFunc("GET /ws/live", wsHandler.ServeWS)
 	mux.HandleFunc("GET /api/v1/slo", sloHandler.HandleSLO)
+	mux.HandleFunc("POST /api/v1/ai/nl-query", nlQueryHandler.HandleNLQuery)
 
 	// Wrap router with middleware chain: tracing → SLI → CORS → handler
 	tracingMiddleware := middleware.Tracing()

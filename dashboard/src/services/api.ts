@@ -111,3 +111,25 @@ export async function fetchSLO(): Promise<import('../types/telemetry').SLORespon
   }
   return res.json();
 }
+
+export interface NLQueryResult {
+  metric_name: string;
+  aggregation: 'avg' | 'max' | 'min';
+  time_range: string;
+  host: string;
+  service: string;
+  explanation: string;
+}
+
+export async function nlQuery(prompt: string, metricNames?: string[]): Promise<NLQueryResult> {
+  const res = await fetch(`${API_BASE}/ai/nl-query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, metric_names: metricNames }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `NL query failed: ${res.statusText}`);
+  }
+  return res.json();
+}

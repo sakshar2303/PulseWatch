@@ -7,23 +7,25 @@ import (
 
 // Config holds runtime configuration for the query/API service.
 type Config struct {
-	Port         string
-	DatabaseURL  string
-	DBMaxConns   int32
-	DBMinConns   int32
-	CORSOrigins  string
-	NATSURL      string
+	Port             string
+	DatabaseURL      string
+	DBMaxConns       int32
+	DBMinConns       int32
+	CORSOrigins      string
+	NATSURL          string
+	AnthropicAPIKey  string
 }
 
 // Load reads configuration from environment variables.
 func Load() (*Config, error) {
 	return &Config{
-		Port:        getEnv("API_PORT", "8080"),
-		DatabaseURL: getEnv("API_DB_URL", "postgresql://pulsewatch:changeme@localhost:5432/pulsewatch?sslmode=disable"),
-		DBMaxConns:  int32(getEnvInt("API_DB_MAX_CONNS", 20)),
-		DBMinConns:  int32(getEnvInt("API_DB_MIN_CONNS", 5)),
-		CORSOrigins: getEnv("API_CORS_ORIGINS", "*"),
-		NATSURL:      getEnv("NATS_URL", "nats://localhost:4222"),
+		Port:            getEnv("API_PORT", "8080"),
+		DatabaseURL:     getEnv("API_DB_URL", "postgresql://pulsewatch:changeme@localhost:5432/pulsewatch?sslmode=disable"),
+		DBMaxConns:      int32(getEnvInt("API_DB_MAX_CONNS", 20)),
+		DBMinConns:      int32(getEnvInt("API_DB_MIN_CONNS", 5)),
+		CORSOrigins:     getEnv("API_CORS_ORIGINS", "*"),
+		NATSURL:         getEnv("NATS_URL", "nats://localhost:4222"),
+		AnthropicAPIKey: getEnv("ANTHROPIC_API_KEY", ""),
 	}, nil
 }
 
