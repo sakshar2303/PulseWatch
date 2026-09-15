@@ -14,7 +14,7 @@
   }
 }
 
-/* Omium-style hairline borders and glass surfaces */
+/* Precision hairline borders and glass surfaces */
 .border-hairline { border-color: rgba(255, 255, 255, 0.08); }
 .border-hairline-subtle { border-color: rgba(255, 255, 255, 0.04); }
 

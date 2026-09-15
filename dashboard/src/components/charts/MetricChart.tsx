@@ -14,12 +14,12 @@ import { QueryResult } from '../../types';
 import { Loader2 } from 'lucide-react';
 
 const SERIES_COLORS = [
-  '#e86a38', // omium-coral
-  '#6ea8fe', // omium-sky
-  '#34d399', // omium-emerald
-  '#f2c94c', // omium-amber
-  '#f87171', // omium-rose
-  '#a78bfa', // omium-violet
+  '#e86a38', // pulse-coral
+  '#6ea8fe', // pulse-sky
+  '#34d399', // pulse-emerald
+  '#f2c94c', // pulse-amber
+  '#f87171', // pulse-rose
+  '#a78bfa', // pulse-violet
 ];
 
 interface MetricChartProps {
@@ -96,7 +96,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
         <div className="flex items-center gap-2">
           <h3 className="text-xs font-bold text-white tracking-wide font-mono uppercase">{title}</h3>
           {unit && (
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-omium-secondary border border-white/10">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-pulse-secondary border border-white/10">
               {unit}
             </span>
           )}
@@ -111,8 +111,8 @@ export const MetricChart: React.FC<MetricChartProps> = ({
                 onClick={() => onAggChange(a)}
                 className={`px-2 py-0.5 rounded uppercase ${
                   agg === a
-                    ? 'bg-omium-coral/20 text-omium-coral font-bold border border-omium-coral/30'
-                    : 'text-omium-secondary hover:text-white'
+                    ? 'bg-pulse-coral/20 text-pulse-coral font-bold border border-pulse-coral/30'
+                    : 'text-pulse-secondary hover:text-white'
                 }`}
               >
                 {a}
@@ -126,16 +126,16 @@ export const MetricChart: React.FC<MetricChartProps> = ({
       <div style={{ height }} className="relative w-full">
         {loading && (
           <div className="absolute inset-0 bg-void/60 backdrop-blur-xs flex items-center justify-center z-10">
-            <Loader2 className="w-5 h-5 animate-spin text-omium-coral" />
+            <Loader2 className="w-5 h-5 animate-spin text-pulse-coral" />
           </div>
         )}
 
         {error ? (
-          <div className="h-full flex items-center justify-center text-xs font-mono text-omium-rose">
+          <div className="h-full flex items-center justify-center text-xs font-mono text-pulse-rose">
             {error}
           </div>
         ) : chartData.length === 0 && !loading ? (
-          <div className="h-full flex flex-col items-center justify-center text-xs font-mono text-omium-tertiary">
+          <div className="h-full flex flex-col items-center justify-center text-xs font-mono text-pulse-tertiary">
             <span>No data in selected range</span>
           </div>
         ) : (

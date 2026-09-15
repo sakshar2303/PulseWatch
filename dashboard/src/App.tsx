@@ -9,9 +9,9 @@ import { AnomaliesPage } from './pages/AnomaliesPage';
 import { AuditPage } from './pages/AuditPage';
 import { AgentDiagnosticsPage } from './pages/AgentDiagnosticsPage';
 import { ChaosLabPage } from './pages/ChaosLabPage';
-import { CheckpointsFeed } from './components/omium/CheckpointsFeed';
-import { ServiceMap } from './components/omium/ServiceMap';
-import { SLOSection } from './components/omium/SLOSection';
+import { CheckpointsFeed } from './components/telemetry/CheckpointsFeed';
+import { ServiceMap } from './components/telemetry/ServiceMap';
+import { SLOSection } from './components/telemetry/SLOSection';
 import { CommandPalette } from './components/common/CommandPalette';
 import { LiveStreamChart } from './components/charts/LiveStreamChart';
 import { useFleet } from './hooks/useFleet';
@@ -80,7 +80,7 @@ export const App: React.FC = () => {
   const unresolvedCount = anomalies.filter((a) => !a.resolved_at).length;
 
   return (
-    <div className="min-h-screen bg-void text-white flex flex-col font-sans selection:bg-omium-coral/30 selection:text-white">
+    <div className="min-h-screen bg-void text-white flex flex-col font-sans selection:bg-pulse-coral/30 selection:text-white">
       {/* Header */}
       <Header
         health={health}
@@ -169,12 +169,12 @@ export const App: React.FC = () => {
           {activePage === 'live' && (
             <div className="space-y-6 pb-12">
               <div className="hud-panel rounded-xl p-6 border border-white/5">
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-omium-coral/10 border border-omium-coral/20 text-omium-coral text-xs font-mono mb-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-omium-coral animate-ping" />
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-pulse-coral/10 border border-pulse-coral/20 text-pulse-coral text-xs font-mono mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-pulse-coral animate-ping" />
                   Live JetStream Stream
                 </div>
                 <h2 className="text-lg font-bold text-white tracking-tight">Full-Screen Real-Time Live Telemetry</h2>
-                <p className="text-xs text-omium-secondary mt-1 font-mono">
+                <p className="text-xs text-pulse-secondary mt-1 font-mono">
                   Sub-millisecond metric events streaming directly from NATS JetStream via WebSocket.
                 </p>
               </div>

@@ -117,12 +117,12 @@ export const TraceWaterfall: React.FC<TraceWaterfallProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-omium-tertiary">Trace ID:</span>
-          <span className="font-mono text-xs text-omium-sky font-semibold bg-omium-sky/10 px-2 py-0.5 rounded border border-omium-sky/20">
+          <span className="font-mono text-xs text-pulse-tertiary">Trace ID:</span>
+          <span className="font-mono text-xs text-pulse-sky font-semibold bg-pulse-sky/10 px-2 py-0.5 rounded border border-pulse-sky/20">
             {traceId}
           </span>
         </div>
-        <div className="text-xs font-mono text-omium-secondary">
+        <div className="text-xs font-mono text-pulse-secondary">
           Total Duration: <span className="text-white font-bold">{totalDurationMs}ms</span>
         </div>
       </div>
@@ -140,19 +140,19 @@ export const TraceWaterfall: React.FC<TraceWaterfallProps> = ({
               onClick={() => setSelectedSpan(span)}
               className={`p-2 rounded-lg cursor-pointer transition-all border ${
                 isSelected
-                  ? 'border-omium-coral/50 bg-void-elevated shadow-sm'
+                  ? 'border-pulse-coral/50 bg-void-elevated shadow-sm'
                   : 'border-white/5 hover:border-white/15 bg-void-card'
               }`}
             >
               <div className="flex items-center justify-between text-xs font-mono mb-1.5">
                 <div className="flex items-center gap-2 truncate" style={{ paddingLeft: `${depth * 14}px` }}>
-                  <span className="text-omium-coral text-[10px]">{depth > 0 ? '↳' : '•'}</span>
+                  <span className="text-pulse-coral text-[10px]">{depth > 0 ? '↳' : '•'}</span>
                   <span className="text-white font-semibold truncate">{span.name}</span>
-                  <span className="text-[10px] text-omium-tertiary bg-white/5 px-1 rounded">
+                  <span className="text-[10px] text-pulse-tertiary bg-white/5 px-1 rounded">
                     {span.service}
                   </span>
                 </div>
-                <span className="text-omium-secondary text-[11px] shrink-0 font-mono">
+                <span className="text-pulse-secondary text-[11px] shrink-0 font-mono">
                   {span.durationMs.toFixed(1)}ms
                 </span>
               </div>
@@ -162,12 +162,12 @@ export const TraceWaterfall: React.FC<TraceWaterfallProps> = ({
                 <div
                   className={`absolute h-full rounded-full transition-all ${
                     span.service === 'timescaledb'
-                      ? 'bg-omium-emerald'
+                      ? 'bg-pulse-emerald'
                       : span.service === 'collector-agent'
-                      ? 'bg-omium-coral'
+                      ? 'bg-pulse-coral'
                       : span.service === 'anomaly-detector'
-                      ? 'bg-omium-amber'
-                      : 'bg-omium-sky'
+                      ? 'bg-pulse-amber'
+                      : 'bg-pulse-sky'
                   }`}
                   style={{
                     left: `${leftPercent}%`,
@@ -184,23 +184,23 @@ export const TraceWaterfall: React.FC<TraceWaterfallProps> = ({
       {selectedSpan && (
         <div className="mt-4 p-4 rounded-xl bg-void border border-white/[0.08]">
           <div className="flex items-center justify-between text-xs font-mono mb-3">
-            <span className="text-omium-tertiary uppercase tracking-wider">Span Attributes</span>
-            <span className="text-omium-coral font-bold">{selectedSpan.id}</span>
+            <span className="text-pulse-tertiary uppercase tracking-wider">Span Attributes</span>
+            <span className="text-pulse-coral font-bold">{selectedSpan.id}</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono">
             <div className="p-2 rounded bg-void-card border border-white/5 flex items-center justify-between">
-              <span className="text-omium-tertiary">Service</span>
+              <span className="text-pulse-tertiary">Service</span>
               <span className="text-white font-semibold">{selectedSpan.service}</span>
             </div>
             <div className="p-2 rounded bg-void-card border border-white/5 flex items-center justify-between">
-              <span className="text-omium-tertiary">Duration</span>
+              <span className="text-pulse-tertiary">Duration</span>
               <span className="text-white font-semibold">{selectedSpan.durationMs}ms</span>
             </div>
             {Object.entries(selectedSpan.tags).map(([k, v]) => (
               <div key={k} className="p-2 rounded bg-void-card border border-white/5 flex items-center justify-between col-span-1 md:col-span-2">
-                <span className="text-omium-secondary">{k}</span>
-                <span className="text-omium-sky font-semibold">{String(v)}</span>
+                <span className="text-pulse-secondary">{k}</span>
+                <span className="text-pulse-sky font-semibold">{String(v)}</span>
               </div>
             ))}
           </div>

@@ -104,7 +104,7 @@ export async function resolveAnomaly(id: number): Promise<void> {
   }
 }
 
-export async function fetchSLO(): Promise<import('../types/omium').SLOResponse> {
+export async function fetchSLO(): Promise<import('../types/telemetry').SLOResponse> {
   const res = await fetch(`${API_BASE}/slo`);
   if (!res.ok) {
     throw new Error(`Failed to fetch SLO metrics: ${res.statusText}`);

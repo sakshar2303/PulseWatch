@@ -196,11 +196,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-2xl bg-void-card border border-white/[0.12] shadow-2xl overflow-hidden font-sans shadow-omium-glow/5"
+        className="w-full max-w-xl rounded-2xl bg-void-card border border-white/[0.12] shadow-2xl overflow-hidden font-sans shadow-pulse-glow/5"
       >
         {/* Search Input Bar */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.08] bg-void">
-          <Search className="w-4 h-4 text-omium-coral shrink-0" />
+          <Search className="w-4 h-4 text-pulse-coral shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -210,9 +210,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               setSelectedIndex(0);
             }}
             placeholder="Search commands, navigate pages, run chaos simulations... (Esc to close)"
-            className="w-full bg-transparent text-sm text-white placeholder-omium-tertiary outline-none font-mono"
+            className="w-full bg-transparent text-sm text-white placeholder-pulse-tertiary outline-none font-mono"
           />
-          <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-omium-tertiary">
+          <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-pulse-tertiary">
             ESC
           </kbd>
         </div>
@@ -220,7 +220,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         {/* Command List */}
         <div className="max-h-80 overflow-y-auto p-2 divide-y divide-white/[0.03]">
           {filteredCommands.length === 0 ? (
-            <div className="p-8 text-center text-xs font-mono text-omium-tertiary">
+            <div className="p-8 text-center text-xs font-mono text-pulse-tertiary">
               No matching commands found for "{query}".
             </div>
           ) : (
@@ -235,14 +235,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-omium-coral/15 border border-omium-coral/30 text-white'
-                      : 'hover:bg-white/[0.03] text-omium-secondary'
+                      ? 'bg-pulse-coral/15 border border-pulse-coral/30 text-white'
+                      : 'hover:bg-white/[0.03] text-pulse-secondary'
                   }`}
                 >
                   <div className="flex items-center gap-3 truncate">
                     <Icon
                       className={`w-4 h-4 shrink-0 ${
-                        isSelected ? 'text-omium-coral' : 'text-omium-tertiary'
+                        isSelected ? 'text-pulse-coral' : 'text-pulse-tertiary'
                       }`}
                     />
                     <span className="text-xs font-medium truncate font-sans text-white">
@@ -250,7 +250,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     </span>
                   </div>
 
-                  <span className="text-[10px] font-mono text-omium-tertiary bg-white/[0.04] px-2 py-0.5 rounded shrink-0">
+                  <span className="text-[10px] font-mono text-pulse-tertiary bg-white/[0.04] px-2 py-0.5 rounded shrink-0">
                     {cmd.category}
                   </span>
                 </div>
@@ -260,12 +260,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-4 py-2 bg-void border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-omium-tertiary">
+        <div className="px-4 py-2 bg-void border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-pulse-tertiary">
           <div className="flex items-center gap-2">
             <span>Navigate: <kbd className="text-white">↑</kbd> <kbd className="text-white">↓</kbd></span>
             <span>Select: <kbd className="text-white">↵</kbd></span>
           </div>
-          <span className="text-omium-coral">PulseWatch Command Palette</span>
+          <span className="text-pulse-coral">PulseWatch Command Palette</span>
         </div>
       </div>
     </div>

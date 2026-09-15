@@ -134,15 +134,15 @@ function Sparkline({ data, color, height = 32 }: { data: number[]; color: string
 // ─── Mini Metric Cell ──────────────────────────────────────────────────────
 
 function MetricCell({ label, metric }: { label: string; metric: AgentMetric }) {
-  const healthColor = metric.health === 'critical' ? 'text-omium-rose' : metric.health === 'warn' ? 'text-omium-amber' : 'text-omium-emerald';
+  const healthColor = metric.health === 'critical' ? 'text-pulse-rose' : metric.health === 'warn' ? 'text-pulse-amber' : 'text-pulse-emerald';
   const TrendIcon = metric.trend === 'up' ? TrendingUp : metric.trend === 'down' ? TrendingDown : null;
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-mono text-omium-tertiary uppercase tracking-wide">{label}</span>
+      <span className="text-[10px] font-mono text-pulse-tertiary uppercase tracking-wide">{label}</span>
       <div className="flex items-baseline gap-1">
         <span className={`text-sm font-bold font-mono ${healthColor}`}>{metric.value}</span>
-        <span className="text-[10px] text-omium-tertiary">{metric.unit}</span>
-        {TrendIcon && <TrendIcon className={`w-3 h-3 ${metric.trend === 'up' && metric.health !== 'ok' ? 'text-omium-amber' : 'text-omium-tertiary'}`} />}
+        <span className="text-[10px] text-pulse-tertiary">{metric.unit}</span>
+        {TrendIcon && <TrendIcon className={`w-3 h-3 ${metric.trend === 'up' && metric.health !== 'ok' ? 'text-pulse-amber' : 'text-pulse-tertiary'}`} />}
       </div>
     </div>
   );
@@ -152,10 +152,10 @@ function MetricCell({ label, metric }: { label: string; metric: AgentMetric }) {
 
 function AgentCard({ agent, isSelected, onClick }: { agent: AgentProcess; isSelected: boolean; onClick: () => void }) {
   const statusStyles: Record<AgentProcess['status'], { border: string; badge: string; dot: string }> = {
-    healthy: { border: 'border-omium-emerald/20', badge: 'bg-omium-emerald/10 text-omium-emerald border-omium-emerald/20', dot: 'bg-omium-emerald' },
-    degraded: { border: 'border-omium-amber/25', badge: 'bg-omium-amber/10 text-omium-amber border-omium-amber/20', dot: 'bg-omium-amber' },
-    critical: { border: 'border-omium-rose/30', badge: 'bg-omium-rose/10 text-omium-rose border-omium-rose/20', dot: 'bg-omium-rose' },
-    idle: { border: 'border-white/10', badge: 'bg-white/5 text-omium-secondary border-white/10', dot: 'bg-omium-secondary' },
+    healthy: { border: 'border-pulse-emerald/20', badge: 'bg-pulse-emerald/10 text-pulse-emerald border-pulse-emerald/20', dot: 'bg-pulse-emerald' },
+    degraded: { border: 'border-pulse-amber/25', badge: 'bg-pulse-amber/10 text-pulse-amber border-pulse-amber/20', dot: 'bg-pulse-amber' },
+    critical: { border: 'border-pulse-rose/30', badge: 'bg-pulse-rose/10 text-pulse-rose border-pulse-rose/20', dot: 'bg-pulse-rose' },
+    idle: { border: 'border-white/10', badge: 'bg-white/5 text-pulse-secondary border-white/10', dot: 'bg-pulse-secondary' },
   };
   const sc = statusStyles[agent.status];
   return (
@@ -163,14 +163,14 @@ function AgentCard({ agent, isSelected, onClick }: { agent: AgentProcess; isSele
       onClick={onClick}
       className={`w-full text-left hud-panel rounded-xl p-4 border transition-all duration-200 ${
         isSelected
-          ? 'border-omium-coral/40 bg-omium-coral/5 shadow-lg shadow-omium-coral/10'
-          : `${sc.border} hover:border-omium-coral/25 hover:bg-white/[0.02]`
+          ? 'border-pulse-coral/40 bg-pulse-coral/5 shadow-lg shadow-pulse-coral/10'
+          : `${sc.border} hover:border-pulse-coral/25 hover:bg-white/[0.02]`
       }`}
     >
       <div className="flex items-start justify-between gap-2 mb-3">
         <div>
           <div className="text-xs font-bold font-mono text-white">{agent.name}</div>
-          <div className="text-[10px] text-omium-tertiary font-mono mt-0.5">{agent.service} · PID {agent.pid}</div>
+          <div className="text-[10px] text-pulse-tertiary font-mono mt-0.5">{agent.service} · PID {agent.pid}</div>
         </div>
         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-mono uppercase ${sc.badge}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${sc.dot} ${agent.status === 'critical' ? 'animate-pulse' : ''}`} />
@@ -184,7 +184,7 @@ function AgentCard({ agent, isSelected, onClick }: { agent: AgentProcess; isSele
         <MetricCell label="Err Rate" metric={agent.metrics.errorRate} />
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-white/[0.05]">
-        <span className="text-[10px] font-mono text-omium-tertiary flex items-center gap-1">
+        <span className="text-[10px] font-mono text-pulse-tertiary flex items-center gap-1">
           <Clock className="w-2.5 h-2.5" /> {agent.uptime}
         </span>
         <Sparkline data={agent.sparklines.cpu} color="#e86a38" height={20} />
@@ -197,10 +197,10 @@ function AgentCard({ agent, isSelected, onClick }: { agent: AgentProcess; isSele
 
 function AgentDetailPanel({ agent }: { agent: AgentProcess }) {
   const statusLabels: Record<AgentProcess['status'], { color: string; label: string }> = {
-    healthy: { color: 'text-omium-emerald', label: 'Healthy' },
-    degraded: { color: 'text-omium-amber', label: 'Degraded' },
-    critical: { color: 'text-omium-rose', label: 'Critical' },
-    idle: { color: 'text-omium-secondary', label: 'Idle' },
+    healthy: { color: 'text-pulse-emerald', label: 'Healthy' },
+    degraded: { color: 'text-pulse-amber', label: 'Degraded' },
+    critical: { color: 'text-pulse-rose', label: 'Critical' },
+    idle: { color: 'text-pulse-secondary', label: 'Idle' },
   };
   const sl = statusLabels[agent.status];
   return (
@@ -209,7 +209,7 @@ function AgentDetailPanel({ agent }: { agent: AgentProcess }) {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="text-lg font-bold font-mono text-white">{agent.name}</div>
-            <div className="text-xs text-omium-secondary mt-0.5">{agent.service} · PID {agent.pid}</div>
+            <div className="text-xs text-pulse-secondary mt-0.5">{agent.service} · PID {agent.pid}</div>
           </div>
           <span className={`text-sm font-bold font-mono ${sl.color}`}>{sl.label}</span>
         </div>
@@ -231,21 +231,21 @@ function AgentDetailPanel({ agent }: { agent: AgentProcess }) {
           { label: 'Request Rate', key: 'requestRate' as const, color: '#34d399' },
         ]).map(({ label, key, color }) => (
           <div key={key} className="hud-panel rounded-xl p-4 border border-white/[0.07]">
-            <div className="text-[10px] font-mono text-omium-tertiary uppercase tracking-wide mb-2">{label}</div>
+            <div className="text-[10px] font-mono text-pulse-tertiary uppercase tracking-wide mb-2">{label}</div>
             <Sparkline data={agent.sparklines[key]} color={color} height={48} />
           </div>
         ))}
       </div>
       <div className="hud-panel rounded-xl p-5 border border-white/[0.07]">
-        <div className="text-xs font-mono text-omium-secondary uppercase tracking-wider mb-3">Recent Process Events</div>
+        <div className="text-xs font-mono text-pulse-secondary uppercase tracking-wider mb-3">Recent Process Events</div>
         <div className="space-y-2">
           {agent.recentEvents.map((evt, i) => {
-            const lvlColors = { info: 'text-omium-sky', warn: 'text-omium-amber', error: 'text-omium-rose' };
-            const lvlDot = { info: 'bg-omium-sky', warn: 'bg-omium-amber', error: 'bg-omium-rose' };
+            const lvlColors = { info: 'text-pulse-sky', warn: 'text-pulse-amber', error: 'text-pulse-rose' };
+            const lvlDot = { info: 'bg-pulse-sky', warn: 'bg-pulse-amber', error: 'bg-pulse-rose' };
             return (
               <div key={i} className="flex items-start gap-2.5 text-xs font-mono">
                 <span className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${lvlDot[evt.level]}`} />
-                <span className="text-omium-tertiary shrink-0 w-14">{evt.time}</span>
+                <span className="text-pulse-tertiary shrink-0 w-14">{evt.time}</span>
                 <span className={lvlColors[evt.level]}>{evt.msg}</span>
               </div>
             );
@@ -300,50 +300,50 @@ export const AgentDiagnosticsPage: React.FC = () => {
     <div className="space-y-6 pb-12">
       <div className="flex items-start justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-omium-sky/10 border border-omium-sky/20 text-omium-sky text-xs font-mono mb-2">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-pulse-sky/10 border border-pulse-sky/20 text-pulse-sky text-xs font-mono mb-2">
             <Layers className="w-3 h-3" />
             Process-Level Diagnostics
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Agent Diagnostics</h1>
-          <p className="text-xs text-omium-secondary mt-1 font-mono">
+          <p className="text-xs text-pulse-secondary mt-1 font-mono">
             Real-time goroutine, GC, and memory telemetry per agent process
           </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="px-2 py-1 rounded-lg bg-omium-emerald/10 border border-omium-emerald/20 text-omium-emerald text-xs font-mono">
+            <span className="px-2 py-1 rounded-lg bg-pulse-emerald/10 border border-pulse-emerald/20 text-pulse-emerald text-xs font-mono">
               {healthSummary.healthy} healthy
             </span>
             {healthSummary.degraded > 0 && (
-              <span className="px-2 py-1 rounded-lg bg-omium-amber/10 border border-omium-amber/20 text-omium-amber text-xs font-mono">
+              <span className="px-2 py-1 rounded-lg bg-pulse-amber/10 border border-pulse-amber/20 text-pulse-amber text-xs font-mono">
                 {healthSummary.degraded} degraded
               </span>
             )}
             {healthSummary.critical > 0 && (
-              <span className="px-2 py-1 rounded-lg bg-omium-rose/10 border border-omium-rose/20 text-omium-rose text-xs font-mono animate-pulse">
+              <span className="px-2 py-1 rounded-lg bg-pulse-rose/10 border border-pulse-rose/20 text-pulse-rose text-xs font-mono animate-pulse">
                 {healthSummary.critical} critical
               </span>
             )}
           </div>
           <button
             onClick={refresh}
-            className="p-2 rounded-lg bg-void-card hover:bg-void-elevated border border-white/10 text-omium-secondary hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-void-card hover:bg-void-elevated border border-white/10 text-pulse-secondary hover:text-white transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      <div className="text-[10px] font-mono text-omium-tertiary -mt-2">
+      <div className="text-[10px] font-mono text-pulse-tertiary -mt-2">
         Last polled: {lastRefresh.toLocaleTimeString()} · auto-refreshes every 3s
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Active Agents', value: agents.length, icon: Server, color: 'text-white' },
-          { label: 'Avg CPU', value: `${(agents.reduce((s, a) => s + a.metrics.cpu.value, 0) / agents.length).toFixed(1)}%`, icon: Cpu, color: 'text-omium-coral' },
-          { label: 'Total Goroutines', value: agents.reduce((s, a) => s + a.metrics.goroutines.value, 0), icon: GitBranch, color: 'text-omium-sky' },
-          { label: 'Avg Error Rate', value: `${(agents.reduce((s, a) => s + a.metrics.errorRate.value, 0) / agents.length).toFixed(2)}%`, icon: AlertTriangle, color: 'text-omium-amber' },
+          { label: 'Avg CPU', value: `${(agents.reduce((s, a) => s + a.metrics.cpu.value, 0) / agents.length).toFixed(1)}%`, icon: Cpu, color: 'text-pulse-coral' },
+          { label: 'Total Goroutines', value: agents.reduce((s, a) => s + a.metrics.goroutines.value, 0), icon: GitBranch, color: 'text-pulse-sky' },
+          { label: 'Avg Error Rate', value: `${(agents.reduce((s, a) => s + a.metrics.errorRate.value, 0) / agents.length).toFixed(2)}%`, icon: AlertTriangle, color: 'text-pulse-amber' },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="hud-panel rounded-xl p-4 border border-white/[0.07] flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
@@ -351,7 +351,7 @@ export const AgentDiagnosticsPage: React.FC = () => {
             </div>
             <div>
               <div className={`text-base font-bold font-mono ${color}`}>{value}</div>
-              <div className="text-[10px] text-omium-tertiary">{label}</div>
+              <div className="text-[10px] text-pulse-tertiary">{label}</div>
             </div>
           </div>
         ))}
@@ -359,7 +359,7 @@ export const AgentDiagnosticsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5">
         <div className="space-y-2.5">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-omium-tertiary px-1 mb-3">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary px-1 mb-3">
             Processes ({agents.length})
           </div>
           {agents.map((ag) => (
@@ -367,7 +367,7 @@ export const AgentDiagnosticsPage: React.FC = () => {
           ))}
         </div>
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-omium-tertiary px-1 mb-3">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary px-1 mb-3">
             Detail — {selected.name}
           </div>
           <AgentDetailPanel agent={selected} />

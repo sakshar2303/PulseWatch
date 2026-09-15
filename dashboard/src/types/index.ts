@@ -80,3 +80,5 @@ export interface TimeRangeConfig {
   durationMs: number;
   defaultStep: string;
 }
+
+export * from './telemetry';

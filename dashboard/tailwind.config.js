@@ -17,7 +17,7 @@ export default {
           'border-subtle': 'rgba(255, 255, 255, 0.04)',
           'border-strong': 'rgba(255, 255, 255, 0.16)',
         },
-        omium: {
+        pulse: {
           coral: '#e86a38',
           'coral-hover': '#f07848',
           'coral-glow': 'rgba(232, 106, 56, 0.18)',
@@ -52,9 +52,9 @@ export default {
         mono: ['Geist Mono', 'JetBrains Mono', 'Fira Code', 'monospace'],
       },
       boxShadow: {
-        'omium-card': '0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 20px -2px rgba(0, 0, 0, 0.7)',
-        'omium-glow': '0 0 24px -4px rgba(232, 106, 56, 0.25)',
-        'omium-cyan': '0 0 24px -4px rgba(110, 168, 254, 0.25)',
+        'pulse-card': '0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 20px -2px rgba(0, 0, 0, 0.7)',
+        'pulse-glow': '0 0 24px -4px rgba(232, 106, 56, 0.25)',
+        'pulse-cyan': '0 0 24px -4px rgba(110, 168, 254, 0.25)',
       },
       animation: {
         'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',

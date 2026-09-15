@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'welcome', label: 'Welcome & Tour', icon: Sparkles, badgeText: 'Tour' },
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'checkpoints', label: 'Live Checkpoints', icon: CheckCircle2, pulse: true, badgeText: 'Omium' },
+    { id: 'checkpoints', label: 'Live Checkpoints', icon: CheckCircle2, pulse: true, badgeText: 'Verify' },
     { id: 'topology', label: 'Service Topology', icon: Network },
     { id: 'slo', label: 'SLO Reliability', icon: ShieldCheck },
     { id: 'diagnostics', label: 'Agent Diagnostics', icon: Cpu, badgeText: 'New' },
@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-3.5 space-y-5">
         {/* Navigation Links */}
         <div className="space-y-1">
-          <div className="px-3 pb-2 text-[10px] font-mono uppercase tracking-wider text-omium-tertiary">
+          <div className="px-3 pb-2 text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary">
             Diagnostics & Verifier
           </div>
           {navItems.map((item) => {
@@ -78,37 +78,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onPageChange(item.id as ActivePage)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   isActive
-                    ? 'bg-omium-coral/15 text-omium-coral font-semibold border border-omium-coral/30 shadow-sm shadow-omium-coral/10'
-                    : 'text-omium-secondary hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-pulse-coral/15 text-pulse-coral font-semibold border border-pulse-coral/30 shadow-sm shadow-pulse-coral/10'
+                    : 'text-pulse-secondary hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-omium-coral' : 'text-omium-tertiary'}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-pulse-coral' : 'text-pulse-tertiary'}`} />
                   <span className="truncate">{item.label}</span>
                 </div>
 
                 <div className="flex items-center gap-1.5">
                   {item.pulse && (
                     <span className="flex h-1.5 w-1.5 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-omium-coral opacity-75" />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-omium-coral" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pulse-coral opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-pulse-coral" />
                     </span>
                   )}
 
                   {item.badgeText && (
-                    <span className="text-[9px] font-mono uppercase px-1 py-0.2 rounded bg-omium-coral/10 text-omium-coral border border-omium-coral/20">
+                    <span className="text-[9px] font-mono uppercase px-1 py-0.2 rounded bg-pulse-coral/10 text-pulse-coral border border-pulse-coral/20">
                       {item.badgeText}
                     </span>
                   )}
 
                   {item.badge !== undefined && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-void-card border border-white/5 text-omium-tertiary">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-void-card border border-white/5 text-pulse-tertiary">
                       {item.badge}
                     </span>
                   )}
 
                   {item.alertBadge !== undefined && item.alertBadge > 0 && (
-                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-omium-rose/20 text-omium-rose border border-omium-rose/30 animate-pulse">
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-pulse-rose/20 text-pulse-rose border border-pulse-rose/30 animate-pulse">
                       {item.alertBadge}
                     </span>
                   )}
@@ -120,18 +120,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Scope Filter Section */}
         <div className="pt-3 border-t border-white/[0.06] space-y-2.5">
-          <div className="flex items-center gap-1.5 px-3 text-[10px] font-mono uppercase tracking-wider text-omium-tertiary">
+          <div className="flex items-center gap-1.5 px-3 text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary">
             <Filter className="w-3 h-3" />
             <span>Telemetry Scope</span>
           </div>
 
           {/* Host Filter */}
           <div className="px-3 space-y-1">
-            <label className="text-[11px] text-omium-tertiary font-mono block">Host</label>
+            <label className="text-[11px] text-pulse-tertiary font-mono block">Host</label>
             <select
               value={selectedHost}
               onChange={(e) => onHostChange(e.target.value)}
-              className="w-full bg-void-card border border-white/[0.08] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-omium-coral/50 font-mono"
+              className="w-full bg-void-card border border-white/[0.08] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-pulse-coral/50 font-mono"
             >
               <option value="">All Hosts ({hosts.length})</option>
               {hosts.map((h) => (
@@ -144,11 +144,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Service Filter */}
           <div className="px-3 space-y-1">
-            <label className="text-[11px] text-omium-tertiary font-mono block">Service</label>
+            <label className="text-[11px] text-pulse-tertiary font-mono block">Service</label>
             <select
               value={selectedService}
               onChange={(e) => onServiceChange(e.target.value)}
-              className="w-full bg-void-card border border-white/[0.08] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-omium-coral/50 font-mono"
+              className="w-full bg-void-card border border-white/[0.08] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-pulse-coral/50 font-mono"
             >
               <option value="">All Services ({services.length})</option>
               {services.map((s) => (
@@ -162,9 +162,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer Info */}
-      <div className="p-3.5 border-t border-white/[0.06] text-[10px] font-mono text-omium-tertiary flex items-center justify-between">
-        <span className="text-omium-secondary">TimescaleDB Hypertable</span>
-        <span className="text-omium-coral font-medium">NATS JetStream</span>
+      <div className="p-3.5 border-t border-white/[0.06] text-[10px] font-mono text-pulse-tertiary flex items-center justify-between">
+        <span className="text-pulse-secondary">TimescaleDB Hypertable</span>
+        <span className="text-pulse-coral font-medium">NATS JetStream</span>
       </div>
     </aside>
   );

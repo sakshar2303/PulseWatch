@@ -103,17 +103,17 @@ const SCENARIOS: ChaosScenario[] = [
 ];
 
 const BLAST_LEVEL_STYLE: Record<BlastLevel, { badge: string; bar: string; label: string }> = {
-  low: { badge: 'bg-omium-emerald/10 text-omium-emerald border-omium-emerald/20', bar: 'bg-omium-emerald', label: 'Low' },
-  medium: { badge: 'bg-omium-sky/10 text-omium-sky border-omium-sky/20', bar: 'bg-omium-sky', label: 'Medium' },
-  high: { badge: 'bg-omium-amber/10 text-omium-amber border-omium-amber/20', bar: 'bg-omium-amber', label: 'High' },
-  critical: { badge: 'bg-omium-rose/10 text-omium-rose border-omium-rose/20', bar: 'bg-omium-rose', label: 'Critical' },
+  low: { badge: 'bg-pulse-emerald/10 text-pulse-emerald border-pulse-emerald/20', bar: 'bg-pulse-emerald', label: 'Low' },
+  medium: { badge: 'bg-pulse-sky/10 text-pulse-sky border-pulse-sky/20', bar: 'bg-pulse-sky', label: 'Medium' },
+  high: { badge: 'bg-pulse-amber/10 text-pulse-amber border-pulse-amber/20', bar: 'bg-pulse-amber', label: 'High' },
+  critical: { badge: 'bg-pulse-rose/10 text-pulse-rose border-pulse-rose/20', bar: 'bg-pulse-rose', label: 'Critical' },
 };
 
 const CATEGORY_COLOR: Record<ChaosScenario['category'], string> = {
-  network: 'text-omium-sky border-omium-sky/20 bg-omium-sky/10',
-  resource: 'text-omium-amber border-omium-amber/20 bg-omium-amber/10',
-  data: 'text-omium-coral border-omium-coral/20 bg-omium-coral/10',
-  cascade: 'text-omium-rose border-omium-rose/20 bg-omium-rose/10',
+  network: 'text-pulse-sky border-pulse-sky/20 bg-pulse-sky/10',
+  resource: 'text-pulse-amber border-pulse-amber/20 bg-pulse-amber/10',
+  data: 'text-pulse-coral border-pulse-coral/20 bg-pulse-coral/10',
+  cascade: 'text-pulse-rose border-pulse-rose/20 bg-pulse-rose/10',
 };
 
 // ─── Scenario script generators ────────────────────────────────────────────
@@ -225,12 +225,12 @@ export const ChaosLabPage: React.FC = () => {
     <div className="space-y-6 pb-12">
       {/* Header */}
       <div>
-        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-omium-rose/10 border border-omium-rose/20 text-omium-rose text-xs font-mono mb-2">
+        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-pulse-rose/10 border border-pulse-rose/20 text-pulse-rose text-xs font-mono mb-2">
           <Zap className="w-3 h-3" />
           Chaos Engineering Studio
         </div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Chaos Lab</h1>
-        <p className="text-xs text-omium-secondary mt-1 font-mono">
+        <p className="text-xs text-pulse-secondary mt-1 font-mono">
           Inject controlled failures. Watch the system self-heal. Generate proof.
         </p>
       </div>
@@ -243,20 +243,20 @@ export const ChaosLabPage: React.FC = () => {
             onClick={() => setFilter(cat)}
             className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-all ${
               filter === cat
-                ? 'bg-omium-coral/15 border-omium-coral/30 text-omium-coral'
-                : 'bg-void-card border-white/10 text-omium-secondary hover:text-white'
+                ? 'bg-pulse-coral/15 border-pulse-coral/30 text-pulse-coral'
+                : 'bg-void-card border-white/10 text-pulse-secondary hover:text-white'
             }`}
           >
             {cat === 'all' ? 'All Scenarios' : cat.charAt(0).toUpperCase() + cat.slice(1)}
           </button>
         ))}
-        <span className="text-[10px] text-omium-tertiary font-mono ml-auto">{filteredScenarios.length} scenario(s)</span>
+        <span className="text-[10px] text-pulse-tertiary font-mono ml-auto">{filteredScenarios.length} scenario(s)</span>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
         {/* Scenario Grid */}
         <div className="space-y-3">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-omium-tertiary mb-1">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary mb-1">
             Select Scenario
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -270,15 +270,15 @@ export const ChaosLabPage: React.FC = () => {
                   onClick={() => { setSelectedScenario(sc); setRunState(null); }}
                   className={`text-left hud-panel rounded-xl p-4 border transition-all duration-150 ${
                     isSelected
-                      ? 'border-omium-coral/40 bg-omium-coral/5 shadow-lg shadow-omium-coral/10'
+                      ? 'border-pulse-coral/40 bg-pulse-coral/5 shadow-lg shadow-pulse-coral/10'
                       : 'border-white/[0.07] hover:border-white/20 hover:bg-white/[0.02]'
                   }`}
                 >
                   <div className="flex items-start gap-3 mb-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      isSelected ? 'bg-omium-coral/20' : 'bg-white/5'
+                      isSelected ? 'bg-pulse-coral/20' : 'bg-white/5'
                     }`}>
-                      <Icon className={`w-4 h-4 ${isSelected ? 'text-omium-coral' : 'text-omium-secondary'}`} />
+                      <Icon className={`w-4 h-4 ${isSelected ? 'text-pulse-coral' : 'text-pulse-secondary'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold font-mono text-white truncate">{sc.name}</div>
@@ -292,8 +292,8 @@ export const ChaosLabPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <p className="text-[11px] text-omium-secondary leading-relaxed mb-3">{sc.description}</p>
-                  <div className="flex items-center justify-between text-[10px] font-mono text-omium-tertiary">
+                  <p className="text-[11px] text-pulse-secondary leading-relaxed mb-3">{sc.description}</p>
+                  <div className="flex items-center justify-between text-[10px] font-mono text-pulse-tertiary">
                     <span className="flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> Recovery: {sc.estimatedRecovery}</span>
                     <span>{sc.affectedServices.length} services</span>
                   </div>
@@ -305,7 +305,7 @@ export const ChaosLabPage: React.FC = () => {
 
         {/* Run Panel */}
         <div className="space-y-4">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-omium-tertiary mb-1">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-pulse-tertiary mb-1">
             Execution Panel
           </div>
 
@@ -319,17 +319,17 @@ export const ChaosLabPage: React.FC = () => {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-omium-tertiary font-mono">Est. Recovery</div>
-                <div className="text-sm font-bold font-mono text-omium-emerald">{selectedScenario.estimatedRecovery}</div>
+                <div className="text-[10px] text-pulse-tertiary font-mono">Est. Recovery</div>
+                <div className="text-sm font-bold font-mono text-pulse-emerald">{selectedScenario.estimatedRecovery}</div>
               </div>
             </div>
 
             {/* Affected Services */}
             <div>
-              <div className="text-[10px] font-mono text-omium-tertiary uppercase tracking-wide mb-1.5">Affected Services</div>
+              <div className="text-[10px] font-mono text-pulse-tertiary uppercase tracking-wide mb-1.5">Affected Services</div>
               <div className="flex flex-wrap gap-1.5">
                 {selectedScenario.affectedServices.map((s) => (
-                  <span key={s} className="text-[10px] font-mono px-2 py-0.5 rounded bg-omium-rose/10 border border-omium-rose/20 text-omium-rose">
+                  <span key={s} className="text-[10px] font-mono px-2 py-0.5 rounded bg-pulse-rose/10 border border-pulse-rose/20 text-pulse-rose">
                     {s}
                   </span>
                 ))}
@@ -338,7 +338,7 @@ export const ChaosLabPage: React.FC = () => {
 
             {/* Blast Radius Bar */}
             <div>
-              <div className="text-[10px] font-mono text-omium-tertiary uppercase tracking-wide mb-1.5">Blast Radius</div>
+              <div className="text-[10px] font-mono text-pulse-tertiary uppercase tracking-wide mb-1.5">Blast Radius</div>
               <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${BLAST_LEVEL_STYLE[selectedScenario.blastRadius].bar}`}
@@ -351,7 +351,7 @@ export const ChaosLabPage: React.FC = () => {
             {!isRunning ? (
               <button
                 onClick={handleRun}
-                className="w-full py-3 rounded-xl bg-omium-rose hover:bg-omium-rose/80 text-white font-bold text-sm font-mono transition-all flex items-center justify-center gap-2 shadow-lg shadow-omium-rose/20"
+                className="w-full py-3 rounded-xl bg-pulse-rose hover:bg-pulse-rose/80 text-white font-bold text-sm font-mono transition-all flex items-center justify-center gap-2 shadow-lg shadow-pulse-rose/20"
               >
                 <Play className="w-4 h-4" />
                 Inject Chaos
@@ -359,7 +359,7 @@ export const ChaosLabPage: React.FC = () => {
             ) : (
               <button
                 onClick={handleStop}
-                className="w-full py-3 rounded-xl bg-void-card hover:bg-void-elevated border border-white/10 text-omium-secondary font-bold text-sm font-mono transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-void-card hover:bg-void-elevated border border-white/10 text-pulse-secondary font-bold text-sm font-mono transition-all flex items-center justify-center gap-2"
               >
                 <StopCircle className="w-4 h-4" />
                 Abort Scenario
@@ -373,43 +373,43 @@ export const ChaosLabPage: React.FC = () => {
               {/* Status Row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {runState.status === 'running' && <span className="w-2 h-2 rounded-full bg-omium-rose animate-pulse" />}
-                  {runState.status === 'recovering' && <span className="w-2 h-2 rounded-full bg-omium-amber animate-pulse" />}
-                  {runState.status === 'recovered' && <CheckCircle2 className="w-4 h-4 text-omium-emerald" />}
+                  {runState.status === 'running' && <span className="w-2 h-2 rounded-full bg-pulse-rose animate-pulse" />}
+                  {runState.status === 'recovering' && <span className="w-2 h-2 rounded-full bg-pulse-amber animate-pulse" />}
+                  {runState.status === 'recovered' && <CheckCircle2 className="w-4 h-4 text-pulse-emerald" />}
                   <span className={`text-xs font-bold font-mono ${
-                    runState.status === 'recovered' ? 'text-omium-emerald' :
-                    runState.status === 'recovering' ? 'text-omium-amber' : 'text-omium-rose'
+                    runState.status === 'recovered' ? 'text-pulse-emerald' :
+                    runState.status === 'recovering' ? 'text-pulse-amber' : 'text-pulse-rose'
                   }`}>
                     {runState.status.toUpperCase()}
                   </span>
                 </div>
-                <span className="text-xs font-mono text-omium-tertiary">+{runState.elapsed}s</span>
+                <span className="text-xs font-mono text-pulse-tertiary">+{runState.elapsed}s</span>
               </div>
 
               {/* Metrics Row */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-void border border-white/5 text-center">
-                  <div className={`text-lg font-bold font-mono ${runState.errorRate > 5 ? 'text-omium-rose' : runState.errorRate > 0 ? 'text-omium-amber' : 'text-omium-emerald'}`}>
+                  <div className={`text-lg font-bold font-mono ${runState.errorRate > 5 ? 'text-pulse-rose' : runState.errorRate > 0 ? 'text-pulse-amber' : 'text-pulse-emerald'}`}>
                     {runState.errorRate}%
                   </div>
-                  <div className="text-[10px] text-omium-tertiary font-mono">Error Rate</div>
+                  <div className="text-[10px] text-pulse-tertiary font-mono">Error Rate</div>
                 </div>
                 <div className="p-3 rounded-lg bg-void border border-white/5 text-center">
-                  <div className={`text-lg font-bold font-mono ${runState.recoveryPct === 100 ? 'text-omium-emerald' : 'text-omium-sky'}`}>
+                  <div className={`text-lg font-bold font-mono ${runState.recoveryPct === 100 ? 'text-pulse-emerald' : 'text-pulse-sky'}`}>
                     {runState.recoveryPct}%
                   </div>
-                  <div className="text-[10px] text-omium-tertiary font-mono">Recovery</div>
+                  <div className="text-[10px] text-pulse-tertiary font-mono">Recovery</div>
                 </div>
               </div>
 
               {/* Recovery Progress Bar */}
               <div>
-                <div className="text-[10px] font-mono text-omium-tertiary uppercase tracking-wide mb-1.5">Recovery Progress</div>
+                <div className="text-[10px] font-mono text-pulse-tertiary uppercase tracking-wide mb-1.5">Recovery Progress</div>
                 <div className="h-2 rounded-full bg-white/5 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-1000 ${
-                      runState.status === 'recovered' ? 'bg-omium-emerald' :
-                      runState.status === 'recovering' ? 'bg-omium-amber' : 'bg-omium-rose'
+                      runState.status === 'recovered' ? 'bg-pulse-emerald' :
+                      runState.status === 'recovering' ? 'bg-pulse-amber' : 'bg-pulse-rose'
                     }`}
                     style={{ width: `${runState.recoveryPct}%` }}
                   />
@@ -418,18 +418,18 @@ export const ChaosLabPage: React.FC = () => {
 
               {/* Timeline */}
               <div>
-                <div className="text-[10px] font-mono text-omium-tertiary uppercase tracking-wide mb-2">Live Timeline</div>
+                <div className="text-[10px] font-mono text-pulse-tertiary uppercase tracking-wide mb-2">Live Timeline</div>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                   {runState.events.length === 0 && (
-                    <div className="text-[11px] font-mono text-omium-tertiary animate-pulse">Initializing scenario...</div>
+                    <div className="text-[11px] font-mono text-pulse-tertiary animate-pulse">Initializing scenario...</div>
                   )}
                   {[...runState.events].reverse().map((evt, i) => {
-                    const colors = { info: 'text-omium-sky', warn: 'text-omium-amber', error: 'text-omium-rose', success: 'text-omium-emerald' };
-                    const dots = { info: 'bg-omium-sky', warn: 'bg-omium-amber', error: 'bg-omium-rose', success: 'bg-omium-emerald' };
+                    const colors = { info: 'text-pulse-sky', warn: 'text-pulse-amber', error: 'text-pulse-rose', success: 'text-pulse-emerald' };
+                    const dots = { info: 'bg-pulse-sky', warn: 'bg-pulse-amber', error: 'bg-pulse-rose', success: 'bg-pulse-emerald' };
                     return (
                       <div key={i} className="flex items-start gap-2 text-[11px] font-mono">
                         <span className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${dots[evt.level]}`} />
-                        <span className="text-omium-tertiary shrink-0 w-8">+{evt.t}s</span>
+                        <span className="text-pulse-tertiary shrink-0 w-8">+{evt.t}s</span>
                         <span className={colors[evt.level]}>{evt.msg}</span>
                       </div>
                     );
@@ -438,9 +438,9 @@ export const ChaosLabPage: React.FC = () => {
               </div>
 
               {runState.status === 'recovered' && (
-                <div className="p-3 rounded-xl bg-omium-emerald/10 border border-omium-emerald/20 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-omium-emerald shrink-0" />
-                  <div className="text-xs font-mono text-omium-emerald">
+                <div className="p-3 rounded-xl bg-pulse-emerald/10 border border-pulse-emerald/20 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-pulse-emerald shrink-0" />
+                  <div className="text-xs font-mono text-pulse-emerald">
                     <span className="font-bold">System recovered.</span> All events confirmed. 0 records dropped.
                   </div>
                 </div>

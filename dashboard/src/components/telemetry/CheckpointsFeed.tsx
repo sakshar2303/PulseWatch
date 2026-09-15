@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SwarmRun } from '../../types/omium';
+import { SwarmRun } from '../../types/telemetry';
 import { TraceWaterfall } from './TraceWaterfall';
 import { ScenarioSimulator } from './ScenarioSimulator';
 
@@ -202,19 +202,19 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
       {/* Live Chaos Scenario Simulator */}
       <ScenarioSimulator />
 
-      {/* Omium Banner Header */}
+      {/* Reliability Banner Header */}
       <div className="hud-panel rounded-xl p-6 border border-white/5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-omium-coral/10 to-transparent pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-pulse-coral/10 to-transparent pointer-events-none" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-omium-coral/10 border border-omium-coral/20 text-omium-coral text-xs font-mono mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-omium-coral animate-ping" />
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-pulse-coral/10 border border-pulse-coral/20 text-pulse-coral text-xs font-mono mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-pulse-coral animate-ping" />
               Live Checkpoint & Ground-Truth Verification
             </div>
             <h2 className="text-xl font-bold text-white tracking-tight">
               Watch Every Write Land in TimescaleDB
             </h2>
-            <p className="text-xs text-omium-secondary mt-1 max-w-2xl">
+            <p className="text-xs text-pulse-secondary mt-1 max-w-2xl">
               Tracing records what your agents claim they did. PulseWatch opens your database to verify the row actually landed, and triggers counterfactual replay for dropped writes.
             </p>
           </div>
@@ -222,16 +222,16 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
           {/* Metric Badges */}
           <div className="flex items-center gap-4 text-xs font-mono">
             <div className="bg-void-card px-3.5 py-2 rounded-lg border border-white/5">
-              <div className="text-omium-tertiary">Silent Failures</div>
+              <div className="text-pulse-tertiary">Silent Failures</div>
               <div className="text-white font-bold text-base mt-0.5 flex items-center gap-1.5">
                 <span>0 / day</span>
-                <span className="text-[10px] text-omium-emerald bg-omium-emerald/10 px-1.5 py-0.5 rounded">100% verified</span>
+                <span className="text-[10px] text-pulse-emerald bg-pulse-emerald/10 px-1.5 py-0.5 rounded">100% verified</span>
               </div>
             </div>
             <div className="bg-void-card px-3.5 py-2 rounded-lg border border-white/5">
-              <div className="text-omium-tertiary">Baseline Drop</div>
+              <div className="text-pulse-tertiary">Baseline Drop</div>
               <div className="text-white font-bold text-base mt-0.5">
-                <span className="text-omium-coral">~2,500</span> → <span className="text-omium-emerald">0</span>
+                <span className="text-pulse-coral">~2,500</span> → <span className="text-pulse-emerald">0</span>
               </div>
             </div>
           </div>
@@ -244,7 +244,7 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               filter === 'all'
                 ? 'bg-white/10 text-white border border-white/20'
-                : 'text-omium-secondary hover:text-white hover:bg-white/5'
+                : 'text-pulse-secondary hover:text-white hover:bg-white/5'
             }`}
           >
             All Swarm Runs ({INITIAL_RUNS.length})
@@ -253,8 +253,8 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
             onClick={() => setFilter('verified')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               filter === 'verified'
-                ? 'bg-omium-emerald/20 text-omium-emerald border border-omium-emerald/30'
-                : 'text-omium-secondary hover:text-white hover:bg-white/5'
+                ? 'bg-pulse-emerald/20 text-pulse-emerald border border-pulse-emerald/30'
+                : 'text-pulse-secondary hover:text-white hover:bg-white/5'
             }`}
           >
             Verified Writes
@@ -263,8 +263,8 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
             onClick={() => setFilter('recovered')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               filter === 'recovered'
-                ? 'bg-omium-coral/20 text-omium-coral border border-omium-coral/30'
-                : 'text-omium-secondary hover:text-white hover:bg-white/5'
+                ? 'bg-pulse-coral/20 text-pulse-coral border border-pulse-coral/30'
+                : 'text-pulse-secondary hover:text-white hover:bg-white/5'
             }`}
           >
             Auto-Recovered
@@ -273,8 +273,8 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
             onClick={() => setFilter('anomalies')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               filter === 'anomalies'
-                ? 'bg-omium-rose/20 text-omium-rose border border-omium-rose/30'
-                : 'text-omium-secondary hover:text-white hover:bg-white/5'
+                ? 'bg-pulse-rose/20 text-pulse-rose border border-pulse-rose/30'
+                : 'text-pulse-secondary hover:text-white hover:bg-white/5'
             }`}
           >
             Anomalies Caught
@@ -286,7 +286,7 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Run List Table */}
         <div className="lg:col-span-6 space-y-3">
-          <div className="text-xs font-mono uppercase tracking-wider text-omium-tertiary px-1 flex items-center justify-between">
+          <div className="text-xs font-mono uppercase tracking-wider text-pulse-tertiary px-1 flex items-center justify-between">
             <span>Recent Agent Runs</span>
             <span>Checkpoints Depth</span>
           </div>
@@ -300,34 +300,34 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                   onClick={() => setSelectedRun(run)}
                   className={`hud-panel rounded-xl p-4 cursor-pointer transition-all border ${
                     isSelected
-                      ? 'border-omium-coral/50 bg-void-elevated shadow-omium-glow'
+                      ? 'border-pulse-coral/50 bg-void-elevated shadow-pulse-glow'
                       : 'border-white/5 hover:border-white/15 bg-void-card hover:bg-void-elevated'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-mono text-xs text-omium-coral font-semibold">
+                      <span className="font-mono text-xs text-pulse-coral font-semibold">
                         {run.id}
                       </span>
                       <span className="text-xs font-medium text-white">
                         {run.agentName}
                       </span>
-                      <span className="text-[11px] text-omium-tertiary font-mono">
+                      <span className="text-[11px] text-pulse-tertiary font-mono">
                         {run.service}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono text-omium-tertiary">
+                      <span className="text-[11px] font-mono text-pulse-tertiary">
                         {run.durationMs}ms
                       </span>
                       <span
                         className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
                           run.status === 'verified'
-                            ? 'bg-omium-emerald/10 text-omium-emerald border-omium-emerald/30'
+                            ? 'bg-pulse-emerald/10 text-pulse-emerald border-pulse-emerald/30'
                             : run.status === 'recovered'
-                            ? 'bg-omium-coral/10 text-omium-coral border-omium-coral/30'
-                            : 'bg-omium-rose/10 text-omium-rose border-omium-rose/30'
+                            ? 'bg-pulse-coral/10 text-pulse-coral border-pulse-coral/30'
+                            : 'bg-pulse-rose/10 text-pulse-rose border-pulse-rose/30'
                         }`}
                       >
                         {run.status === 'verified' ? '✓ Verified' : '↺ Recovered'}
@@ -335,13 +335,13 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                     </div>
                   </div>
 
-                  <p className="text-xs text-omium-secondary mt-2 line-clamp-1">
+                  <p className="text-xs text-pulse-secondary mt-2 line-clamp-1">
                     {run.statusText}
                   </p>
 
-                  <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/5 text-[11px] font-mono text-omium-tertiary">
+                  <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/5 text-[11px] font-mono text-pulse-tertiary">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-omium-emerald" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-pulse-emerald" />
                       {run.writesLanded} write{run.writesLanded > 1 ? 's' : ''} landed
                     </span>
                     <span>{run.checkpointsCount} checkpoints · {run.timestamp}</span>
@@ -359,15 +359,15 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
               <div className="flex items-center justify-between pb-4 border-b border-white/5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold text-omium-coral">
+                    <span className="font-mono text-sm font-bold text-pulse-coral">
                       {selectedRun.id}
                     </span>
                     <span className="text-xs font-semibold text-white">
                       {selectedRun.agentName}
                     </span>
                   </div>
-                  <div className="text-xs font-mono text-omium-tertiary mt-0.5">
-                    Service: <span className="text-omium-secondary">{selectedRun.service}</span> · Latency: {selectedRun.durationMs}ms
+                  <div className="text-xs font-mono text-pulse-tertiary mt-0.5">
+                    Service: <span className="text-pulse-secondary">{selectedRun.service}</span> · Latency: {selectedRun.durationMs}ms
                   </div>
                 </div>
 
@@ -375,7 +375,7 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                   href="http://localhost:16686"
                   target="_blank"
                   rel="noreferrer"
-                  className="px-2.5 py-1 rounded-lg bg-void-card hover:bg-white/10 border border-white/10 text-xs font-mono text-omium-sky flex items-center gap-1.5 transition-colors"
+                  className="px-2.5 py-1 rounded-lg bg-void-card hover:bg-white/10 border border-white/10 text-xs font-mono text-pulse-sky flex items-center gap-1.5 transition-colors"
                 >
                   <span>Jaeger Trace</span>
                   <span>↗</span>
@@ -388,8 +388,8 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                   onClick={() => setViewMode('checkpoints')}
                   className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
                     viewMode === 'checkpoints'
-                      ? 'bg-omium-coral/20 text-omium-coral font-bold border border-omium-coral/30'
-                      : 'text-omium-secondary hover:text-white bg-white/5'
+                      ? 'bg-pulse-coral/20 text-pulse-coral font-bold border border-pulse-coral/30'
+                      : 'text-pulse-secondary hover:text-white bg-white/5'
                   }`}
                 >
                   Step Checkpoints ({selectedRun.checkpoints.length})
@@ -398,8 +398,8 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                   onClick={() => setViewMode('waterfall')}
                   className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
                     viewMode === 'waterfall'
-                      ? 'bg-omium-sky/20 text-omium-sky font-bold border border-omium-sky/30'
-                      : 'text-omium-secondary hover:text-white bg-white/5'
+                      ? 'bg-pulse-sky/20 text-pulse-sky font-bold border border-pulse-sky/30'
+                      : 'text-pulse-secondary hover:text-white bg-white/5'
                   }`}
                 >
                   Distributed Trace Waterfall ⚡
@@ -418,19 +418,19 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                 <>
                   {/* Counterfactual Replay Box */}
                   {selectedRun.status === 'recovered' && (
-                    <div className="mt-4 p-3.5 rounded-lg bg-omium-coral/5 border border-omium-coral/20 text-xs">
-                      <div className="font-bold text-omium-coral flex items-center gap-1.5 mb-1">
+                    <div className="mt-4 p-3.5 rounded-lg bg-pulse-coral/5 border border-pulse-coral/20 text-xs">
+                      <div className="font-bold text-pulse-coral flex items-center gap-1.5 mb-1">
                         <span>↺</span> Counterfactual Replay & Self-Repair
                       </div>
-                      <div className="text-omium-secondary text-[11px] leading-relaxed">
-                        Step <code className="font-mono text-omium-coral bg-black/40 px-1 py-0.5 rounded">{selectedRun.failingStep}</code> failed schema check. Agent resumed execution from checkpoint <code className="font-mono text-white bg-black/40 px-1 py-0.5 rounded">ckpt_0a4b</code> and successfully committed write.
+                      <div className="text-pulse-secondary text-[11px] leading-relaxed">
+                        Step <code className="font-mono text-pulse-coral bg-black/40 px-1 py-0.5 rounded">{selectedRun.failingStep}</code> failed schema check. Agent resumed execution from checkpoint <code className="font-mono text-white bg-black/40 px-1 py-0.5 rounded">ckpt_0a4b</code> and successfully committed write.
                       </div>
                     </div>
                   )}
 
                   {/* Checkpoint Step Timeline */}
                   <div className="mt-5">
-                    <div className="text-xs font-mono uppercase tracking-wider text-omium-tertiary mb-3">
+                    <div className="text-xs font-mono uppercase tracking-wider text-pulse-tertiary mb-3">
                       Execution Checkpoint History
                     </div>
 
@@ -441,11 +441,11 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                           <span
                             className={`absolute left-0 top-1 w-3 h-3 rounded-full border-2 bg-void ${
                               ckpt.status === 'success'
-                                ? 'border-omium-emerald'
+                                ? 'border-pulse-emerald'
                                 : ckpt.status === 'warn'
-                                ? 'border-omium-coral'
+                                ? 'border-pulse-coral'
                                 : ckpt.status === 'error'
-                                ? 'border-omium-rose'
+                                ? 'border-pulse-rose'
                                 : 'border-white/20'
                             }`}
                           />
@@ -455,17 +455,17 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                               <span className="font-mono text-xs font-semibold text-white">
                                 {ckpt.title}
                               </span>
-                              <span className="font-mono text-[10px] text-omium-coral bg-omium-coral/10 px-1.5 py-0.5 rounded">
+                              <span className="font-mono text-[10px] text-pulse-coral bg-pulse-coral/10 px-1.5 py-0.5 rounded">
                                 {ckpt.id}
                               </span>
                             </div>
-                            <p className="text-xs text-omium-secondary mt-1">
+                            <p className="text-xs text-pulse-secondary mt-1">
                               {ckpt.detail}
                             </p>
-                            <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-omium-tertiary">
+                            <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-pulse-tertiary">
                               <span>{ckpt.timeAgo}</span>
                               {ckpt.metadata?.table && (
-                                <span className="text-omium-emerald">table: {ckpt.metadata.table}</span>
+                                <span className="text-pulse-emerald">table: {ckpt.metadata.table}</span>
                               )}
                               {ckpt.metadata?.rowsWritten !== undefined && (
                                 <span>{ckpt.metadata.rowsWritten} rows</span>
@@ -480,7 +480,7 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
               )}
             </div>
           ) : (
-            <div className="hud-panel rounded-xl p-12 text-center text-omium-tertiary text-xs font-mono border border-white/5">
+            <div className="hud-panel rounded-xl p-12 text-center text-pulse-tertiary text-xs font-mono border border-white/5">
               Select a run from the left panel to inspect its checkpoints.
             </div>
           )}

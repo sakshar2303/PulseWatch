@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchSLO } from '../services/api';
-import { SLOResponse } from '../types/omium';
+import { SLOResponse } from '../types/telemetry';
 
 export function useSLO(pollIntervalMs: number = 10000) {
   const [sloData, setSloData] = useState<SLOResponse | null>(null);
