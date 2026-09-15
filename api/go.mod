@@ -7,6 +7,9 @@ require (
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/nats-io/nats.go v1.37.0
 	github.com/sakshar2303/pulsewatch/pkg/model v0.0.0-00010101000000-000000000000
+	github.com/sakshar2303/pulsewatch/pkg/otel v0.0.0-00010101000000-000000000000
+	go.opentelemetry.io/otel v1.28.0
+	go.opentelemetry.io/otel/trace v1.28.0
 )
 
 require (
@@ -24,3 +27,5 @@ require (
 )
 
 replace github.com/sakshar2303/pulsewatch/pkg/model => ../pkg/model
+
+replace github.com/sakshar2303/pulsewatch/pkg/otel => ../pkg/otel

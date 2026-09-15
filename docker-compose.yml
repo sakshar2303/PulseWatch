@@ -58,6 +58,30 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # ============================================================================
+  # Jaeger — Distributed Tracing
+  # ============================================================================
+  # Jaeger all-in-one collects OpenTelemetry traces from all PulseWatch services
+  # via OTLP gRPC (port 4317). The Jaeger UI at http://localhost:16686 provides
+  # trace visualization, service dependency graphs, and latency analysis.
+  # ============================================================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: pulsewatch-jaeger
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC receiver
+      - "4318:4318"     # OTLP HTTP receiver
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16687"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
 volumes:
   tsdb_data:
     driver: local

@@ -47,6 +47,30 @@ func (m *mockStore) ResolveAnomaly(ctx context.Context, id int64) error {
 	return m.err
 }
 
+func (m *mockStore) GetAlertRules(ctx context.Context, enabledOnly bool) ([]store.AlertRule, error) {
+	return nil, m.err
+}
+
+func (m *mockStore) GetAlertRule(ctx context.Context, id int64) (*store.AlertRule, error) {
+	return nil, m.err
+}
+
+func (m *mockStore) CreateAlertRule(ctx context.Context, rule *store.AlertRule) (*store.AlertRule, error) {
+	return rule, m.err
+}
+
+func (m *mockStore) UpdateAlertRule(ctx context.Context, id int64, rule *store.AlertRule) (*store.AlertRule, error) {
+	return rule, m.err
+}
+
+func (m *mockStore) DeleteAlertRule(ctx context.Context, id int64) error {
+	return m.err
+}
+
+func (m *mockStore) ToggleAlertRule(ctx context.Context, id int64) (*store.AlertRule, error) {
+	return nil, m.err
+}
+
 func (m *mockStore) Ping(ctx context.Context) error {
 	return m.err
 }

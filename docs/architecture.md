@@ -157,3 +157,53 @@ Three lines of defense, in order:
 - No credentials in source code (`.env` + `.gitignore`)
 - TLS for NATS connections in production
 - Database connection pooling with limited max connections
+
+## Distributed Tracing (Phase 6)
+
+PulseWatch integrates end-to-end distributed tracing using OpenTelemetry (OTel) and Jaeger.
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Collector   │────►│  Ingestion   │────►│   FastAPI    │────►│   Go REST    │
+│  Agent (Go)  │     │ Service (Go) │     │Detector (Py) │     │   API (Go)   │
+└──────┬───────┘     └──────┬───────┘     └──────┬───────┘     └──────┬───────┘
+       │                    │                    │                    │
+       │ OTLP / gRPC        │ OTLP / gRPC        │ OTLP / gRPC        │ OTLP / gRPC
+       └────────────────────┼────────────────────┼────────────────────┘
+                            ▼
+                   ┌─────────────────┐
+                   │     Jaeger      │
+                   │  All-in-One     │
+                   │ (UI: port 16686)│
+                   └─────────────────┘
+```
+
+- **Standards**: OpenTelemetry Go SDK & Python SDK, W3C TraceContext (`traceparent`).
+- **Span Hierarchy**:
+  - `collector.collect_and_send` (metrics collection loop and batch send)
+  - `ingestion.batch_flush` (JetStream consumption to TimescaleDB COPY/batch insert)
+  - `detector.detect_anomalies` / `detector.train_model` (ML batch scoring & training)
+  - `http.request` (API gateway requests with method, path, status, and duration attributes)
+- **Jaeger Integration**: All services forward OTLP spans to `jaeger:4317` (gRPC) or `localhost:4317`. Query and inspect traces on Jaeger UI at `http://localhost:16686`.
+
+## Service Level Objectives (SLOs) & SLIs
+
+PulseWatch tracks internal platform health using Google SRE methodology:
+
+| Objective | Target | SLI Measurement | Error Budget |
+|---|---|---|---|
+| **API Availability** | **99.9%** | % of non-5xx HTTP requests over rolling 1h window | 0.1% failed requests |
+| **API Latency (p99)**| **< 500ms** | 99th percentile HTTP response duration | Excess latency > 500ms |
+
+- **Metrics Collection**: High-performance in-memory rolling window ring buffer (`api/internal/middleware/sli.go`).
+- **SLO API**: `GET /api/v1/slo` returns real-time compliance status, error budget consumed, and p50/p90/p99 latency percentiles.
+
+## Resilience & Chaos Engineering
+
+PulseWatch includes an automated chaos testing suite (`scripts/chaos/chaos_test.sh`) to validate self-healing behavior under adverse operational events:
+
+1. **NATS Message Broker Outage**: Collectors buffer metrics in local ring buffers; JetStream consumers reconnect with backoff.
+2. **TimescaleDB Outage**: Ingestion worker buffers batches and retries; zero data loss when DB resumes.
+3. **Anomaly Detector Crash**: API service and ingestion remain fully operational; detector recovers automatically without impacting real-time pipeline.
+4. **Concurrent Load Spike**: Pipeline maintains throughput under simulated multi-agent telemetry load.
+5. **Network Partition Simulation**: System recovers gracefully once partition heals without split-brain corruption.

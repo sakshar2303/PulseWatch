@@ -62,6 +62,22 @@ type Anomaly struct {
 	Metadata    map[string]any `json:"metadata"`
 }
 
+// AlertRule represents a user-defined threshold alerting rule.
+type AlertRule struct {
+	ID         int64     `json:"id"`
+	Name       string    `json:"name"`
+	MetricName string    `json:"metric_name"`
+	Condition  string    `json:"condition"`
+	Threshold  float64   `json:"threshold"`
+	Duration   string    `json:"duration"`
+	Severity   string    `json:"severity"`
+	Service    *string   `json:"service,omitempty"`
+	Host       *string   `json:"host,omitempty"`
+	Enabled    bool      `json:"enabled"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 // Store defines database operations required by the Query API.
 type Store interface {
 	GetMetricNames(ctx context.Context) ([]string, error)
@@ -71,6 +87,12 @@ type Store interface {
 	GetHosts(ctx context.Context) ([]HostInfo, error)
 	GetAnomalies(ctx context.Context, service, severity string, resolved *bool, limit, offset int) ([]Anomaly, int, error)
 	ResolveAnomaly(ctx context.Context, id int64) error
+	GetAlertRules(ctx context.Context, enabledOnly bool) ([]AlertRule, error)
+	GetAlertRule(ctx context.Context, id int64) (*AlertRule, error)
+	CreateAlertRule(ctx context.Context, rule *AlertRule) (*AlertRule, error)
+	UpdateAlertRule(ctx context.Context, id int64, rule *AlertRule) (*AlertRule, error)
+	DeleteAlertRule(ctx context.Context, id int64) error
+	ToggleAlertRule(ctx context.Context, id int64) (*AlertRule, error)
 	Ping(ctx context.Context) error
 	Close()
 }
@@ -475,6 +497,140 @@ func (s *PgxStore) ResolveAnomaly(ctx context.Context, id int64) error {
 		return fmt.Errorf("anomaly not found with id %d", id)
 	}
 	return nil
+}
+
+// GetAlertRules returns all alert rules, optionally filtering by enabled status.
+func (s *PgxStore) GetAlertRules(ctx context.Context, enabledOnly bool) ([]AlertRule, error) {
+	query := `
+		SELECT id, name, metric_name, condition, threshold, duration::TEXT, severity, service, host, enabled, created_at, updated_at
+		FROM alert_rules
+	`
+	if enabledOnly {
+		query += " WHERE enabled = TRUE"
+	}
+	query += " ORDER BY id ASC;"
+
+	rows, err := s.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query alert rules: %w", err)
+	}
+	defer rows.Close()
+
+	var rules []AlertRule
+	for rows.Next() {
+		var r AlertRule
+		if err := rows.Scan(
+			&r.ID, &r.Name, &r.MetricName, &r.Condition, &r.Threshold, &r.Duration,
+			&r.Severity, &r.Service, &r.Host, &r.Enabled, &r.CreatedAt, &r.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan alert rule row: %w", err)
+		}
+		r.CreatedAt = r.CreatedAt.UTC()
+		r.UpdatedAt = r.UpdatedAt.UTC()
+		rules = append(rules, r)
+	}
+
+	if rules == nil {
+		rules = []AlertRule{}
+	}
+	return rules, nil
+}
+
+// GetAlertRule fetches a single alert rule by its ID.
+func (s *PgxStore) GetAlertRule(ctx context.Context, id int64) (*AlertRule, error) {
+	query := `
+		SELECT id, name, metric_name, condition, threshold, duration::TEXT, severity, service, host, enabled, created_at, updated_at
+		FROM alert_rules
+		WHERE id = $1;
+	`
+	var r AlertRule
+	if err := s.pool.QueryRow(ctx, query, id).Scan(
+		&r.ID, &r.Name, &r.MetricName, &r.Condition, &r.Threshold, &r.Duration,
+		&r.Severity, &r.Service, &r.Host, &r.Enabled, &r.CreatedAt, &r.UpdatedAt,
+	); err != nil {
+		return nil, fmt.Errorf("alert rule not found with id %d: %w", id, err)
+	}
+	r.CreatedAt = r.CreatedAt.UTC()
+	r.UpdatedAt = r.UpdatedAt.UTC()
+	return &r, nil
+}
+
+// CreateAlertRule inserts a new alert rule into the database.
+func (s *PgxStore) CreateAlertRule(ctx context.Context, rule *AlertRule) (*AlertRule, error) {
+	query := `
+		INSERT INTO alert_rules (name, metric_name, condition, threshold, duration, severity, service, host, enabled, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, ($5::TEXT)::INTERVAL, $6, $7, $8, $9, NOW(), NOW())
+		RETURNING id, duration::TEXT, created_at, updated_at;
+	`
+	var outDur string
+	var createdAt, updatedAt time.Time
+	if err := s.pool.QueryRow(ctx, query,
+		rule.Name, rule.MetricName, rule.Condition, rule.Threshold, rule.Duration,
+		rule.Severity, rule.Service, rule.Host, rule.Enabled,
+	).Scan(&rule.ID, &outDur, &createdAt, &updatedAt); err != nil {
+		return nil, fmt.Errorf("failed to create alert rule: %w", err)
+	}
+	rule.Duration = outDur
+	rule.CreatedAt = createdAt.UTC()
+	rule.UpdatedAt = updatedAt.UTC()
+	return rule, nil
+}
+
+// UpdateAlertRule updates an existing alert rule.
+func (s *PgxStore) UpdateAlertRule(ctx context.Context, id int64, rule *AlertRule) (*AlertRule, error) {
+	query := `
+		UPDATE alert_rules
+		SET name = $2, metric_name = $3, condition = $4, threshold = $5,
+		    duration = ($6::TEXT)::INTERVAL, severity = $7, service = $8, host = $9,
+		    enabled = $10, updated_at = NOW()
+		WHERE id = $1
+		RETURNING duration::TEXT, created_at, updated_at;
+	`
+	var outDur string
+	var createdAt, updatedAt time.Time
+	if err := s.pool.QueryRow(ctx, query,
+		id, rule.Name, rule.MetricName, rule.Condition, rule.Threshold, rule.Duration,
+		rule.Severity, rule.Service, rule.Host, rule.Enabled,
+	).Scan(&outDur, &createdAt, &updatedAt); err != nil {
+		return nil, fmt.Errorf("failed to update alert rule id %d: %w", id, err)
+	}
+	rule.ID = id
+	rule.Duration = outDur
+	rule.CreatedAt = createdAt.UTC()
+	rule.UpdatedAt = updatedAt.UTC()
+	return rule, nil
+}
+
+// DeleteAlertRule deletes an alert rule by ID.
+func (s *PgxStore) DeleteAlertRule(ctx context.Context, id int64) error {
+	cmd, err := s.pool.Exec(ctx, "DELETE FROM alert_rules WHERE id = $1;", id)
+	if err != nil {
+		return fmt.Errorf("failed to delete alert rule: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return fmt.Errorf("alert rule not found with id %d", id)
+	}
+	return nil
+}
+
+// ToggleAlertRule flips the enabled boolean flag of an alert rule.
+func (s *PgxStore) ToggleAlertRule(ctx context.Context, id int64) (*AlertRule, error) {
+	query := `
+		UPDATE alert_rules
+		SET enabled = NOT enabled, updated_at = NOW()
+		WHERE id = $1
+		RETURNING id, name, metric_name, condition, threshold, duration::TEXT, severity, service, host, enabled, created_at, updated_at;
+	`
+	var r AlertRule
+	if err := s.pool.QueryRow(ctx, query, id).Scan(
+		&r.ID, &r.Name, &r.MetricName, &r.Condition, &r.Threshold, &r.Duration,
+		&r.Severity, &r.Service, &r.Host, &r.Enabled, &r.CreatedAt, &r.UpdatedAt,
+	); err != nil {
+		return nil, fmt.Errorf("failed to toggle alert rule id %d: %w", id, err)
+	}
+	r.CreatedAt = r.CreatedAt.UTC()
+	r.UpdatedAt = r.UpdatedAt.UTC()
+	return &r, nil
 }
 
 // Ping verifies database connectivity.

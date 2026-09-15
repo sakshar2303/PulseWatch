@@ -6,6 +6,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/nats-io/nats.go v1.53.1
 	github.com/sakshar2303/pulsewatch/pkg/model v0.0.0
+	github.com/sakshar2303/pulsewatch/pkg/otel v0.0.0
 )
 
 require (
@@ -23,3 +24,5 @@ require (
 )
 
 replace github.com/sakshar2303/pulsewatch/pkg/model => ../pkg/model
+
+replace github.com/sakshar2303/pulsewatch/pkg/otel => ../pkg/otel

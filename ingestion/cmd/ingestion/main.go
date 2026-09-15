@@ -15,10 +15,18 @@ import (
 	"github.com/sakshar2303/pulsewatch/ingestion/internal/consumer"
 	"github.com/sakshar2303/pulsewatch/ingestion/internal/handler"
 	"github.com/sakshar2303/pulsewatch/ingestion/internal/writer"
+	pwotel "github.com/sakshar2303/pulsewatch/pkg/otel"
 )
 
 func main() {
 	log.Println("[INFO] Starting PulseWatch Ingestion Service...")
+
+	// Initialize distributed tracing
+	_, err := pwotel.InitTracer("pulsewatch-ingestion")
+	if err != nil {
+		log.Printf("[WARN] Failed to initialize tracer (non-fatal): %v", err)
+	}
+	defer pwotel.Shutdown(context.Background())
 
 	cfg, err := config.Load()
 	if err != nil {

@@ -78,7 +78,7 @@ run-api: ## Run the query/API service
 	cd api && go run ./cmd/api/
 
 run-detector: ## Run the anomaly detection service
-	cd detector && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+	cd detector && ([ -d .venv ] && .venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload || python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload)
 
 run-dashboard: ## Run the frontend dashboard (dev server)
 	cd dashboard && npm run dev
@@ -115,7 +115,7 @@ test-api: ## Run API tests
 	cd api && go test ./... -v
 
 test-detector: ## Run anomaly detector tests
-	cd detector && python -m pytest tests/ -v
+	cd detector && ([ -d .venv ] && .venv/bin/pytest tests/ -v || python -m pytest tests/ -v)
 
 test-all: test-collector test-ingestion test-api test-detector ## Run all tests
 
@@ -137,20 +137,37 @@ lint-dashboard: ## Lint frontend code
 lint-all: lint-go lint-python lint-dashboard ## Lint everything
 
 # ==============================================================================
-# Docker
+# Docker & Production Compose
 # ==============================================================================
 
-docker-build: ## Build all Docker images
-	docker compose -f docker-compose.yml build
+docker-build: ## Build all 5 application service Docker images
+	docker compose -f docker-compose.prod.yml build
 
-docker-up: ## Start entire stack via Docker
-	docker compose -f docker-compose.yml up -d
+docker-prod-up: ## Start entire full-stack platform in Docker
+	docker compose -f docker-compose.prod.yml up -d
 
-docker-down: ## Stop entire Docker stack
-	docker compose -f docker-compose.yml down
+docker-prod-down: ## Stop entire full-stack Docker platform
+	docker compose -f docker-compose.prod.yml down
+
+docker-prod-logs: ## View production container logs
+	docker compose -f docker-compose.prod.yml logs -f
 
 # ==============================================================================
-# Utilities
+# Kubernetes
+# ==============================================================================
+
+k8s-validate: ## Validate all Kubernetes manifests
+	@echo "Validating Kubernetes manifests..."
+	@python3 scripts/validate_k8s.py
+
+k8s-apply: ## Apply all Kubernetes manifests to current cluster
+	kubectl apply -f deployments/k8s/
+
+k8s-delete: ## Delete all PulseWatch Kubernetes resources
+	kubectl delete -f deployments/k8s/
+
+# ==============================================================================
+# Utilities & Observability
 # ==============================================================================
 
 loadgen: ## Run the synthetic load generator
@@ -163,6 +180,16 @@ seed: ## Seed the database with sample data
 		-U $${TSDB_USER:-pulsewatch} \
 		-d $${TSDB_DATABASE:-pulsewatch} \
 		-f scripts/seed.sql
+
+chaos-test: ## Run the automated chaos engineering resilience test suite
+	./scripts/chaos/chaos_test.sh
+
+jaeger-ui: ## Open Jaeger distributed tracing UI
+	@echo "Jaeger UI available at: http://localhost:16686"
+	@command -v open >/dev/null 2>&1 && open http://localhost:16686 || true
+
+slo-check: ## Query real-time SLO compliance and error budget
+	@curl -s http://localhost:8080/api/v1/slo | jq . || curl -s http://localhost:8080/api/v1/slo
 
 clean: ## Remove build artifacts
 	rm -rf bin/

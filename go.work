@@ -5,4 +5,5 @@ use (
 	./collector
 	./ingestion
 	./pkg/model
+	./pkg/otel
 )

@@ -15,10 +15,18 @@ import (
 	"github.com/sakshar2303/pulsewatch/api/internal/middleware"
 	"github.com/sakshar2303/pulsewatch/api/internal/store"
 	"github.com/sakshar2303/pulsewatch/api/internal/websocket"
+	pwotel "github.com/sakshar2303/pulsewatch/pkg/otel"
 )
 
 func main() {
 	log.Println("[INFO] Starting PulseWatch Query/API Service...")
+
+	// Initialize distributed tracing
+	_, err := pwotel.InitTracer("pulsewatch-api")
+	if err != nil {
+		log.Printf("[WARN] Failed to initialize tracer (non-fatal): %v", err)
+	}
+	defer pwotel.Shutdown(context.Background())
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -50,7 +58,12 @@ func main() {
 	servicesHandler := handler.NewServicesHandler(dbStore)
 	hostsHandler := handler.NewHostsHandler(dbStore)
 	anomaliesHandler := handler.NewAnomaliesHandler(dbStore)
+	alertsHandler := handler.NewAlertsHandler(dbStore)
 	wsHandler := websocket.NewHandler(wsHub)
+
+	// SLI/SLO metrics (5-minute rolling window)
+	sliCollector := middleware.NewSLICollector(5 * time.Minute)
+	sloHandler := handler.NewSLOHandler(sliCollector)
 
 	mux.HandleFunc("GET /health", healthHandler.HandleHealth)
 	mux.HandleFunc("GET /api/v1/metrics/names", namesHandler.HandleNames)
@@ -60,11 +73,21 @@ func main() {
 	mux.HandleFunc("GET /api/v1/anomalies", anomaliesHandler.HandleList)
 	mux.HandleFunc("PATCH /api/v1/anomalies/{id}/resolve", anomaliesHandler.HandleResolve)
 	mux.HandleFunc("POST /api/v1/anomalies/{id}/resolve", anomaliesHandler.HandleResolve)
+	mux.HandleFunc("GET /api/v1/alerts/rules", alertsHandler.HandleList)
+	mux.HandleFunc("POST /api/v1/alerts/rules", alertsHandler.HandleCreate)
+	mux.HandleFunc("GET /api/v1/alerts/rules/{id}", alertsHandler.HandleGet)
+	mux.HandleFunc("PUT /api/v1/alerts/rules/{id}", alertsHandler.HandleUpdate)
+	mux.HandleFunc("DELETE /api/v1/alerts/rules/{id}", alertsHandler.HandleDelete)
+	mux.HandleFunc("PATCH /api/v1/alerts/rules/{id}/toggle", alertsHandler.HandleToggle)
+	mux.HandleFunc("POST /api/v1/alerts/rules/{id}/toggle", alertsHandler.HandleToggle)
 	mux.HandleFunc("GET /ws/live", wsHandler.ServeWS)
+	mux.HandleFunc("GET /api/v1/slo", sloHandler.HandleSLO)
 
-	// Wrap router with CORS middleware
+	// Wrap router with middleware chain: tracing → SLI → CORS → handler
+	tracingMiddleware := middleware.Tracing()
+	sliMiddleware := middleware.SLI(sliCollector)
 	corsMiddleware := middleware.CORS(cfg.CORSOrigins)
-	httpHandler := corsMiddleware(mux)
+	httpHandler := tracingMiddleware(sliMiddleware(corsMiddleware(mux)))
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,

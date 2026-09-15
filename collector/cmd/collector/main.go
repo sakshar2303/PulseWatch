@@ -8,11 +8,14 @@ import (
 	"syscall"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/sakshar2303/pulsewatch/collector/internal/client"
 	"github.com/sakshar2303/pulsewatch/collector/internal/config"
 	"github.com/sakshar2303/pulsewatch/collector/internal/metrics"
 	"github.com/sakshar2303/pulsewatch/collector/internal/publisher"
 	"github.com/sakshar2303/pulsewatch/pkg/model"
+	pwotel "github.com/sakshar2303/pulsewatch/pkg/otel"
 )
 
 // MetricSender abstracts the delivery mechanism (NATS or HTTP).
@@ -45,6 +48,13 @@ func (n *natsSender) Close() {
 
 func main() {
 	log.Println("[INFO] Starting PulseWatch Collector Agent...")
+
+	// Initialize distributed tracing
+	_, err := pwotel.InitTracer("pulsewatch-collector")
+	if err != nil {
+		log.Printf("[WARN] Failed to initialize tracer (non-fatal): %v", err)
+	}
+	defer pwotel.Shutdown(context.Background())
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -101,15 +111,23 @@ func main() {
 }
 
 func collectAndSend(ctx context.Context, c *metrics.SystemCollector, s MetricSender) {
+	tracer := pwotel.Tracer("pulsewatch.collector")
+	ctx, span := tracer.Start(ctx, "collect_and_send")
+	defer span.End()
+
 	start := time.Now()
 	points, err := c.Collect(ctx)
 	if err != nil {
+		span.SetAttributes(attribute.String("error", err.Error()))
 		log.Printf("[WARN] Error collecting system metrics: %v", err)
 		return
 	}
 
+	span.SetAttributes(attribute.Int("metrics.count", len(points)))
+
 	err = s.Send(ctx, points)
 	if err != nil {
+		span.SetAttributes(attribute.String("send.error", err.Error()))
 		log.Printf("[WARN] Metric delivery notice: %v", err)
 		return
 	}

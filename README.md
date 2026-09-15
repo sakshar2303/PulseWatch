@@ -186,10 +186,36 @@ A metric point flowing through the system:
 - [x] **Phase 0** — Design: Architecture, data model, API contracts, project scaffold
 - [x] **Phase 1** — Core Pipeline: Collector → Direct Ingestion → TimescaleDB → Query API
 - [x] **Phase 2** — Scale: NATS JetStream queue, backpressure handling, load testing, multiple collectors
-- [ ] **Phase 3** — Dashboard: Live mission-control UI with real-time charts
-- [ ] **Phase 4** — Alerting + ML: Threshold alerts, Isolation Forest anomaly detection
-- [ ] **Phase 5** — Infra: Docker, Kubernetes, CI/CD, Terraform
-- [ ] **Phase 6** — Polish: Distributed tracing, chaos testing, SLOs, live demo
+- [x] **Phase 3** — Dashboard: Live mission-control UI with real-time charts
+- [x] **Phase 4** — Alerting + ML: Threshold alerts, Isolation Forest anomaly detection
+- [x] **Phase 5** — Infra: Docker, Kubernetes, CI/CD, Terraform
+- [x] **Phase 6** — Polish: Distributed tracing, chaos testing, SLOs, live demo
+
+---
+
+## Observability, SLOs & Distributed Tracing
+
+PulseWatch dogfoods industry-standard observability practices on its own microservices:
+
+- **Distributed Tracing**: OpenTelemetry SDKs instrument all Go services and the Python anomaly detector. Spans are exported via OTLP gRPC to **Jaeger** (`http://localhost:16686`).
+- **Trace Propagation**: Context is injected into HTTP request headers (`traceparent`) and async background routines. See [docs/tracing.md](docs/tracing.md) for architecture and tracing workflows.
+- **SLO / SLI Tracking**: In-memory rolling-window SLI collector measures API availability (99.9% target) and latency (p99 < 500ms target). Real-time compliance and error budget consumption are queryable via `GET /api/v1/slo`.
+
+---
+
+## Chaos Engineering & Resilience
+
+PulseWatch includes an automated fault injection framework (`scripts/chaos/chaos_test.sh`) to evaluate self-healing and fault tolerance:
+
+| Experiment | Fault Injected | Observed System Behavior | Result |
+|---|---|---|---|
+| **EXP-01: NATS Outage** | Killed NATS JetStream container | Collectors safely buffered in ring buffers; drained on recovery | **PASSED** |
+| **EXP-02: DB Outage** | Stopped TimescaleDB container | Ingestion queued batches in JetStream; committed upon recovery | **PASSED** |
+| **EXP-03: Detector Crash** | Terminated Python detector process | API & ingestion pipeline unaffected; zero impact on collection | **PASSED** |
+| **EXP-04: Concurrency Load** | 10,000 pts/sec burst over 50 hosts | Zero crash; bounded latency within p99 SLO thresholds | **PASSED** |
+| **EXP-05: Network Partition** | Isolated broker network | Collectors resumed queue sync cleanly without split-brain | **PASSED** |
+
+Full chaos experiment methodology and failure domain analysis are documented in [docs/chaos_test_results.md](docs/chaos_test_results.md).
 
 ---
 

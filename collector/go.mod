@@ -5,7 +5,10 @@ go 1.25.0
 require (
 	github.com/nats-io/nats.go v1.53.1
 	github.com/sakshar2303/pulsewatch/pkg/model v0.0.0
+	github.com/sakshar2303/pulsewatch/pkg/otel v0.0.0
 	github.com/shirou/gopsutil/v4 v4.25.1
+	go.opentelemetry.io/otel v1.28.0
+	go.opentelemetry.io/otel/trace v1.28.0
 )
 
 require (
@@ -24,3 +27,5 @@ require (
 )
 
 replace github.com/sakshar2303/pulsewatch/pkg/model => ../pkg/model
+
+replace github.com/sakshar2303/pulsewatch/pkg/otel => ../pkg/otel
