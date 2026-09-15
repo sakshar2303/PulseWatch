@@ -3,6 +3,7 @@ import { StatCard } from '../components/common/StatCard';
 import { MetricChart } from '../components/charts/MetricChart';
 import { LiveStreamChart } from '../components/charts/LiveStreamChart';
 import { CheckpointsFeed } from '../components/omium/CheckpointsFeed';
+import { ScenarioSimulator } from '../components/omium/ScenarioSimulator';
 import { AnomalyFeed } from '../components/alerts/AnomalyFeed';
 import { useMetrics } from '../hooks/useMetrics';
 import { useLiveStream } from '../hooks/useLiveStream';
@@ -131,6 +132,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Interactive Scenario & Chaos Simulator */}
+      <ScenarioSimulator />
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">

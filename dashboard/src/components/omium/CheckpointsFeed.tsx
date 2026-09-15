@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { SwarmRun } from '../../types/omium';
+import { TraceWaterfall } from './TraceWaterfall';
+import { ScenarioSimulator } from './ScenarioSimulator';
 
 interface CheckpointsFeedProps {
   unresolvedAnomalyCount?: number;
@@ -186,6 +188,7 @@ const INITIAL_RUNS: SwarmRun[] = [
 export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
   const [filter, setFilter] = useState<'all' | 'verified' | 'recovered' | 'anomalies'>('all');
   const [selectedRun, setSelectedRun] = useState<SwarmRun | null>(INITIAL_RUNS[0]);
+  const [viewMode, setViewMode] = useState<'checkpoints' | 'waterfall'>('checkpoints');
 
   const filteredRuns = INITIAL_RUNS.filter((r) => {
     if (filter === 'verified') return r.status === 'verified';
@@ -196,6 +199,9 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
 
   return (
     <div className="space-y-6">
+      {/* Live Chaos Scenario Simulator */}
+      <ScenarioSimulator />
+
       {/* Omium Banner Header */}
       <div className="hud-panel rounded-xl p-6 border border-white/5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-omium-coral/10 to-transparent pointer-events-none" />
@@ -376,66 +382,102 @@ export const CheckpointsFeed: React.FC<CheckpointsFeedProps> = () => {
                 </a>
               </div>
 
-              {/* Counterfactual Replay Box */}
-              {selectedRun.status === 'recovered' && (
-                <div className="mt-4 p-3.5 rounded-lg bg-omium-coral/5 border border-omium-coral/20 text-xs">
-                  <div className="font-bold text-omium-coral flex items-center gap-1.5 mb-1">
-                    <span>↺</span> Counterfactual Replay & Self-Repair
-                  </div>
-                  <div className="text-omium-secondary text-[11px] leading-relaxed">
-                    Step <code className="font-mono text-omium-coral bg-black/40 px-1 py-0.5 rounded">{selectedRun.failingStep}</code> failed schema check. Agent resumed execution from checkpoint <code className="font-mono text-white bg-black/40 px-1 py-0.5 rounded">ckpt_0a4b</code> and successfully committed write.
-                  </div>
+              {/* View Mode Toggle: Checkpoints vs Distributed Trace Waterfall */}
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/5">
+                <button
+                  onClick={() => setViewMode('checkpoints')}
+                  className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
+                    viewMode === 'checkpoints'
+                      ? 'bg-omium-coral/20 text-omium-coral font-bold border border-omium-coral/30'
+                      : 'text-omium-secondary hover:text-white bg-white/5'
+                  }`}
+                >
+                  Step Checkpoints ({selectedRun.checkpoints.length})
+                </button>
+                <button
+                  onClick={() => setViewMode('waterfall')}
+                  className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
+                    viewMode === 'waterfall'
+                      ? 'bg-omium-sky/20 text-omium-sky font-bold border border-omium-sky/30'
+                      : 'text-omium-secondary hover:text-white bg-white/5'
+                  }`}
+                >
+                  Distributed Trace Waterfall ⚡
+                </button>
+              </div>
+
+              {/* Conditional Rendering: Checkpoints Timeline vs Trace Waterfall */}
+              {viewMode === 'waterfall' ? (
+                <div className="mt-4">
+                  <TraceWaterfall
+                    traceId="4bf92f3577b34da6a3ce929d0e0e4736"
+                    totalDurationMs={selectedRun.durationMs}
+                  />
                 </div>
-              )}
-
-              {/* Checkpoint Step Timeline */}
-              <div className="mt-5">
-                <div className="text-xs font-mono uppercase tracking-wider text-omium-tertiary mb-3">
-                  Execution Checkpoint History
-                </div>
-
-                <div className="space-y-3 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-white/5">
-                  {selectedRun.checkpoints.map((ckpt) => (
-                    <div key={ckpt.id} className="relative flex items-start gap-3.5 pl-6 group">
-                      {/* Timeline node */}
-                      <span
-                        className={`absolute left-0 top-1 w-3 h-3 rounded-full border-2 bg-void ${
-                          ckpt.status === 'success'
-                            ? 'border-omium-emerald'
-                            : ckpt.status === 'warn'
-                            ? 'border-omium-coral'
-                            : ckpt.status === 'error'
-                            ? 'border-omium-rose'
-                            : 'border-white/20'
-                        }`}
-                      />
-
-                      <div className="flex-1 bg-void-card/60 p-3 rounded-lg border border-white/5 group-hover:border-white/15 transition-all">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-xs font-semibold text-white">
-                            {ckpt.title}
-                          </span>
-                          <span className="font-mono text-[10px] text-omium-coral bg-omium-coral/10 px-1.5 py-0.5 rounded">
-                            {ckpt.id}
-                          </span>
-                        </div>
-                        <p className="text-xs text-omium-secondary mt-1">
-                          {ckpt.detail}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-omium-tertiary">
-                          <span>{ckpt.timeAgo}</span>
-                          {ckpt.metadata?.table && (
-                            <span className="text-omium-emerald">table: {ckpt.metadata.table}</span>
-                          )}
-                          {ckpt.metadata?.rowsWritten !== undefined && (
-                            <span>{ckpt.metadata.rowsWritten} rows</span>
-                          )}
-                        </div>
+              ) : (
+                <>
+                  {/* Counterfactual Replay Box */}
+                  {selectedRun.status === 'recovered' && (
+                    <div className="mt-4 p-3.5 rounded-lg bg-omium-coral/5 border border-omium-coral/20 text-xs">
+                      <div className="font-bold text-omium-coral flex items-center gap-1.5 mb-1">
+                        <span>↺</span> Counterfactual Replay & Self-Repair
+                      </div>
+                      <div className="text-omium-secondary text-[11px] leading-relaxed">
+                        Step <code className="font-mono text-omium-coral bg-black/40 px-1 py-0.5 rounded">{selectedRun.failingStep}</code> failed schema check. Agent resumed execution from checkpoint <code className="font-mono text-white bg-black/40 px-1 py-0.5 rounded">ckpt_0a4b</code> and successfully committed write.
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  )}
+
+                  {/* Checkpoint Step Timeline */}
+                  <div className="mt-5">
+                    <div className="text-xs font-mono uppercase tracking-wider text-omium-tertiary mb-3">
+                      Execution Checkpoint History
+                    </div>
+
+                    <div className="space-y-3 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-white/5">
+                      {selectedRun.checkpoints.map((ckpt) => (
+                        <div key={ckpt.id} className="relative flex items-start gap-3.5 pl-6 group">
+                          {/* Timeline node */}
+                          <span
+                            className={`absolute left-0 top-1 w-3 h-3 rounded-full border-2 bg-void ${
+                              ckpt.status === 'success'
+                                ? 'border-omium-emerald'
+                                : ckpt.status === 'warn'
+                                ? 'border-omium-coral'
+                                : ckpt.status === 'error'
+                                ? 'border-omium-rose'
+                                : 'border-white/20'
+                            }`}
+                          />
+
+                          <div className="flex-1 bg-void-card/60 p-3 rounded-lg border border-white/5 group-hover:border-white/15 transition-all">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-mono text-xs font-semibold text-white">
+                                {ckpt.title}
+                              </span>
+                              <span className="font-mono text-[10px] text-omium-coral bg-omium-coral/10 px-1.5 py-0.5 rounded">
+                                {ckpt.id}
+                              </span>
+                            </div>
+                            <p className="text-xs text-omium-secondary mt-1">
+                              {ckpt.detail}
+                            </p>
+                            <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-omium-tertiary">
+                              <span>{ckpt.timeAgo}</span>
+                              {ckpt.metadata?.table && (
+                                <span className="text-omium-emerald">table: {ckpt.metadata.table}</span>
+                              )}
+                              {ckpt.metadata?.rowsWritten !== undefined && (
+                                <span>{ckpt.metadata.rowsWritten} rows</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="hud-panel rounded-xl p-12 text-center text-omium-tertiary text-xs font-mono border border-white/5">

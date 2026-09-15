@@ -14,12 +14,12 @@ import { QueryResult } from '../../types';
 import { Loader2 } from 'lucide-react';
 
 const SERIES_COLORS = [
-  '#06b6d4', // neon-cyan
-  '#10b981', // neon-emerald
-  '#8b5cf6', // neon-violet
-  '#f59e0b', // neon-amber
-  '#f43f5e', // neon-rose
-  '#38bdf8', // neon-sky
+  '#e86a38', // omium-coral
+  '#6ea8fe', // omium-sky
+  '#34d399', // omium-emerald
+  '#f2c94c', // omium-amber
+  '#f87171', // omium-rose
+  '#a78bfa', // omium-violet
 ];
 
 interface MetricChartProps {
@@ -90,13 +90,13 @@ export const MetricChart: React.FC<MetricChartProps> = ({
   };
 
   return (
-    <div className="hud-panel rounded-xl p-5 border border-slate-850 flex flex-col justify-between">
+    <div className="hud-panel rounded-xl p-5 border border-white/[0.07] bg-void-card flex flex-col justify-between">
       {/* Chart Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-slate-100 tracking-wide">{title}</h3>
+          <h3 className="text-xs font-bold text-white tracking-wide font-mono uppercase">{title}</h3>
           {unit && (
-            <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-omium-secondary border border-white/10">
               {unit}
             </span>
           )}
@@ -104,15 +104,15 @@ export const MetricChart: React.FC<MetricChartProps> = ({
 
         {/* Aggregation Selector */}
         {onAggChange && (
-          <div className="flex items-center bg-carbon-850 rounded-md border border-slate-800 p-0.5 text-[11px] font-mono">
+          <div className="flex items-center bg-void rounded-md border border-white/[0.08] p-0.5 text-[10px] font-mono">
             {(['avg', 'max', 'min'] as const).map((a) => (
               <button
                 key={a}
                 onClick={() => onAggChange(a)}
                 className={`px-2 py-0.5 rounded uppercase ${
                   agg === a
-                    ? 'bg-neon-cyan/20 text-neon-cyan font-bold border border-neon-cyan/30'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-omium-coral/20 text-omium-coral font-bold border border-omium-coral/30'
+                    : 'text-omium-secondary hover:text-white'
                 }`}
               >
                 {a}
@@ -125,17 +125,17 @@ export const MetricChart: React.FC<MetricChartProps> = ({
       {/* Chart Canvas Area */}
       <div style={{ height }} className="relative w-full">
         {loading && (
-          <div className="absolute inset-0 bg-carbon-900/60 backdrop-blur-xs flex items-center justify-center z-10">
-            <Loader2 className="w-6 h-6 animate-spin text-neon-cyan" />
+          <div className="absolute inset-0 bg-void/60 backdrop-blur-xs flex items-center justify-center z-10">
+            <Loader2 className="w-5 h-5 animate-spin text-omium-coral" />
           </div>
         )}
 
         {error ? (
-          <div className="h-full flex items-center justify-center text-xs font-mono text-rose-400">
+          <div className="h-full flex items-center justify-center text-xs font-mono text-omium-rose">
             {error}
           </div>
         ) : chartData.length === 0 && !loading ? (
-          <div className="h-full flex flex-col items-center justify-center text-xs font-mono text-slate-500">
+          <div className="h-full flex flex-col items-center justify-center text-xs font-mono text-omium-tertiary">
             <span>No data in selected range</span>
           </div>
         ) : (
@@ -153,12 +153,12 @@ export const MetricChart: React.FC<MetricChartProps> = ({
                 })}
               </defs>
 
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" vertical={false} />
 
               <XAxis
                 dataKey="time"
-                stroke="#64748b"
-                tick={{ fontSize: 10, fill: '#64748b', fontFamily: 'monospace' }}
+                stroke="#5b616e"
+                tick={{ fontSize: 10, fill: '#8a8f98', fontFamily: 'monospace' }}
                 tickFormatter={(val: string) => {
                   const d = new Date(val);
                   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
