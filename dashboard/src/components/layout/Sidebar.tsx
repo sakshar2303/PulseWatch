@@ -8,10 +8,12 @@ import {
   ShieldCheck,
   CheckCircle2,
   Filter,
+  Network,
+  FileCheck,
 } from 'lucide-react';
 import { HostInfo, ServiceInfo } from '../../types';
 
-export type ActivePage = 'overview' | 'checkpoints' | 'slo' | 'live' | 'explorer' | 'fleet' | 'anomalies';
+export type ActivePage = 'overview' | 'checkpoints' | 'topology' | 'slo' | 'audit' | 'live' | 'explorer' | 'fleet' | 'anomalies';
 
 interface SidebarProps {
   activePage: ActivePage;
@@ -39,7 +41,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'checkpoints', label: 'Live Checkpoints', icon: CheckCircle2, pulse: true, badgeText: 'Omium' },
+    { id: 'topology', label: 'Service Topology', icon: Network },
     { id: 'slo', label: 'SLO Reliability', icon: ShieldCheck },
+    { id: 'audit', label: 'Failure Audit Proof', icon: FileCheck, badgeText: 'Proof' },
     { id: 'live', label: 'Live Telemetry', icon: Radio },
     { id: 'explorer', label: 'Metric Explorer', icon: LineChart },
     { id: 'fleet', label: 'Fleet & Agents', icon: Server, badge: hosts.length },

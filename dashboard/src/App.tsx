@@ -5,8 +5,11 @@ import { OverviewPage } from './pages/OverviewPage';
 import { ExplorerPage } from './pages/ExplorerPage';
 import { FleetPage } from './pages/FleetPage';
 import { AnomaliesPage } from './pages/AnomaliesPage';
+import { AuditPage } from './pages/AuditPage';
 import { CheckpointsFeed } from './components/omium/CheckpointsFeed';
+import { ServiceMap } from './components/omium/ServiceMap';
 import { SLOSection } from './components/omium/SLOSection';
+import { CommandPalette } from './components/common/CommandPalette';
 import { LiveStreamChart } from './components/charts/LiveStreamChart';
 import { useFleet } from './hooks/useFleet';
 import { useLiveStream } from './hooks/useLiveStream';
@@ -21,6 +24,7 @@ export const App: React.FC = () => {
   const [selectedService, setSelectedService] = useState<string>('');
   const [wsStatus, setWsStatus] = useState<ConnectionStatus>(wsService.getStatus());
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
 
   // Fleet data
   const {
@@ -48,6 +52,18 @@ export const App: React.FC = () => {
     return () => unsub();
   }, []);
 
+  // Global Cmd + K / Ctrl + K shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshFleet();
@@ -72,6 +88,7 @@ export const App: React.FC = () => {
         onRefreshIntervalChange={setRefreshInterval}
         onManualRefresh={handleManualRefresh}
         isRefreshing={isRefreshing}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
 
       {/* Body */}
@@ -111,9 +128,21 @@ export const App: React.FC = () => {
             </div>
           )}
 
+          {activePage === 'topology' && (
+            <div className="space-y-6 pb-12">
+              <ServiceMap />
+            </div>
+          )}
+
           {activePage === 'slo' && (
             <div className="space-y-6 pb-12">
               <SLOSection />
+            </div>
+          )}
+
+          {activePage === 'audit' && (
+            <div className="space-y-6 pb-12">
+              <AuditPage />
             </div>
           )}
 
@@ -167,6 +196,13 @@ export const App: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Global Command Palette Modal */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigate={(page) => setActivePage(page)}
+      />
     </div>
   );
 };

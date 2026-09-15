@@ -1,5 +1,4 @@
-import React from 'react';
-import { RefreshCw, ExternalLink } from 'lucide-react';
+import { RefreshCw, ExternalLink, Search } from 'lucide-react';
 import { HealthResponse, TimeRangePreset } from '../../types';
 import { ConnectionStatus } from '../../services/websocket';
 import { TIME_RANGE_CONFIGS } from '../../hooks/useMetrics';
@@ -13,6 +12,7 @@ interface HeaderProps {
   onRefreshIntervalChange: (interval: number) => void;
   onManualRefresh: () => void;
   isRefreshing: boolean;
+  onOpenCommandPalette?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -24,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefreshIntervalChange,
   onManualRefresh,
   isRefreshing,
+  onOpenCommandPalette,
 }) => {
   const tsdbHealthy = health?.dependencies?.timescaledb?.status === 'healthy';
   const natsHealthy = health?.dependencies?.nats?.status === 'healthy';
@@ -64,6 +65,19 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Tracing, Time Presets & Auto-refresh */}
       <div className="flex items-center gap-2.5">
+        {/* Command Palette Trigger */}
+        {onOpenCommandPalette && (
+          <button
+            onClick={onOpenCommandPalette}
+            title="Open Command Palette (Cmd + K)"
+            className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-void-card hover:bg-void-elevated border border-white/10 text-xs font-mono text-omium-secondary hover:text-white transition-colors"
+          >
+            <Search className="w-3.5 h-3.5 text-omium-coral" />
+            <span>Search</span>
+            <kbd className="text-[10px] bg-white/5 px-1 py-0.2 rounded border border-white/10 text-omium-tertiary">⌘K</kbd>
+          </button>
+        )}
+
         {/* Jaeger Distributed Traces Link */}
         <a
           href="http://localhost:16686"
