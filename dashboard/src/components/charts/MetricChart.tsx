@@ -25,6 +25,7 @@ const SERIES_COLORS = [
 interface MetricChartProps {
   title: string;
   data: QueryResult | null;
+  forecasts?: import('../../services/api').Forecast[];
   loading?: boolean;
   error?: string | null;
   unit?: string;
@@ -38,6 +39,7 @@ interface MetricChartProps {
 export const MetricChart: React.FC<MetricChartProps> = ({
   title,
   data,
+  forecasts = [],
   loading = false,
   error = null,
   unit = '',
@@ -49,33 +51,48 @@ export const MetricChart: React.FC<MetricChartProps> = ({
 }) => {
   // Transform SeriesResult[] into flat array of { time: string, [host]: number }
   const { chartData, seriesKeys } = useMemo(() => {
-    if (!data || !data.series || data.series.length === 0) {
+    if ((!data || !data.series || data.series.length === 0) && forecasts.length === 0) {
       return { chartData: [], seriesKeys: [] };
     }
 
     const timeMap = new Map<string, Record<string, any>>();
     const keys: string[] = [];
 
-    data.series.forEach((s) => {
-      const key = s.host || s.service || 'value';
-      if (!keys.includes(key)) keys.push(key);
+    if (data?.series) {
+      data.series.forEach((s) => {
+        const key = s.host || s.service || 'value';
+        if (!keys.includes(key)) keys.push(key);
 
-      s.datapoints.forEach((dp) => {
-        // Quantize time to ISO string
-        const tStr = new Date(dp.time).toISOString();
-        if (!timeMap.has(tStr)) {
-          timeMap.set(tStr, { time: tStr, timestamp: new Date(dp.time).getTime() });
-        }
-        timeMap.get(tStr)![key] = Number(dp.value.toFixed(2));
+        s.datapoints.forEach((dp) => {
+          // Quantize time to ISO string
+          const tStr = new Date(dp.time).toISOString();
+          if (!timeMap.has(tStr)) {
+            timeMap.set(tStr, { time: tStr, timestamp: new Date(dp.time).getTime() });
+          }
+          timeMap.get(tStr)![key] = Number(dp.value.toFixed(2));
+        });
       });
-    });
+    }
+
+    if (forecasts && forecasts.length > 0) {
+      const forecastKey = 'forecast';
+      if (!keys.includes(forecastKey)) keys.push(forecastKey);
+      
+      forecasts.forEach((f) => {
+        const tStr = new Date(f.forecast_time).toISOString();
+        if (!timeMap.has(tStr)) {
+          timeMap.set(tStr, { time: tStr, timestamp: new Date(f.forecast_time).getTime() });
+        }
+        timeMap.get(tStr)![forecastKey] = Number(f.predicted_value.toFixed(2));
+      });
+    }
 
     const sortedData = Array.from(timeMap.values()).sort(
       (a, b) => a.timestamp - b.timestamp
     );
 
     return { chartData: sortedData, seriesKeys: keys };
-  }, [data]);
+  }, [data, forecasts]);
 
   const defaultFormatter = (val: number) => {
     if (formatter) return formatter(val);
@@ -216,6 +233,22 @@ export const MetricChart: React.FC<MetricChartProps> = ({
               )}
 
               {seriesKeys.map((key, idx) => {
+                if (key === 'forecast') {
+                  return (
+                    <Area
+                      key={key}
+                      type="monotone"
+                      dataKey={key}
+                      name="Forecast (ML)"
+                      stroke="#f87171" // pulse-rose
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      fillOpacity={0.1}
+                      fill="#f87171"
+                      isAnimationActive={false}
+                    />
+                  );
+                }
                 const color = SERIES_COLORS[idx % SERIES_COLORS.length];
                 return (
                   <Area

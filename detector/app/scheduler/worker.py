@@ -21,6 +21,7 @@ from app.config import settings
 from app.engine.deduplicator import deduplicator
 from app.engine.detector import ml_detector
 from app.engine.rules import rules_evaluator
+from app.engine.forecaster import forecaster
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +50,17 @@ async def _run_ml_pass() -> None:
         log.exception("[scheduler] ML pass error")
 
 
+async def _run_forecast_pass() -> None:
+    """One pass of the forecaster."""
+    try:
+        n = await forecaster.run_cycle()
+        if n:
+            log.info("[scheduler] Forecast pass ran for %d series", n)
+        else:
+            log.debug("[scheduler] Forecast pass: no series generated")
+    except Exception:
+        log.exception("[scheduler] Forecast pass error")
+
 async def evaluation_loop() -> None:
     """Main scheduler loop — runs indefinitely until cancelled."""
     log.info(
@@ -60,10 +72,11 @@ async def evaluation_loop() -> None:
         cycle_start = datetime.now(timezone.utc)
         log.debug("[scheduler] starting evaluation cycle at %s", cycle_start.isoformat())
 
-        # Run both passes concurrently
+        # Run all passes concurrently
         await asyncio.gather(
             _run_threshold_pass(),
             _run_ml_pass(),
+            _run_forecast_pass(),
         )
 
         # Prune expired dedup entries once per cycle

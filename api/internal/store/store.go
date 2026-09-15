@@ -63,6 +63,21 @@ type Anomaly struct {
 	RCASummary  *string        `json:"rca_summary,omitempty"`
 }
 
+// Forecast represents a predicted future value with confidence bounds.
+type Forecast struct {
+	ID             int64     `json:"id"`
+	GeneratedAt    time.Time `json:"generated_at"`
+	MetricName     string    `json:"metric_name"`
+	Host           string    `json:"host"`
+	Service        string    `json:"service"`
+	ForecastTime   time.Time `json:"forecast_time"`
+	PredictedValue float64   `json:"predicted_value"`
+	LowerBound     *float64  `json:"lower_bound,omitempty"`
+	UpperBound     *float64  `json:"upper_bound,omitempty"`
+	HorizonMinutes int       `json:"horizon_minutes"`
+	ModelType      string    `json:"model_type"`
+}
+
 // AlertRule represents a user-defined threshold alerting rule.
 type AlertRule struct {
 	ID         int64     `json:"id"`
@@ -95,6 +110,7 @@ type Store interface {
 	UpdateAlertRule(ctx context.Context, id int64, rule *AlertRule) (*AlertRule, error)
 	DeleteAlertRule(ctx context.Context, id int64) error
 	ToggleAlertRule(ctx context.Context, id int64) (*AlertRule, error)
+	GetForecasts(ctx context.Context, metric, host, service string) ([]Forecast, error)
 	Ping(ctx context.Context) error
 	Close()
 }
@@ -659,3 +675,40 @@ func (s *PgxStore) Close() {
 		s.pool.Close()
 	}
 }
+
+// GetForecasts fetches recent forecasts for a specific series.
+func (s *PgxStore) GetForecasts(ctx context.Context, metric, host, service string) ([]Forecast, error) {
+	query := `
+		SELECT id, generated_at, metric_name, host, service, forecast_time, predicted_value, lower_bound, upper_bound, horizon_minutes, model_type
+		FROM forecasts
+		WHERE metric_name = $1 AND host = $2 AND service = $3
+		  AND forecast_time >= NOW()
+		ORDER BY forecast_time ASC
+		LIMIT 120;
+	`
+	rows, err := s.pool.Query(ctx, query, metric, host, service)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query forecasts: %w", err)
+	}
+	defer rows.Close()
+
+	var forecasts []Forecast
+	for rows.Next() {
+		var f Forecast
+		if err := rows.Scan(
+			&f.ID, &f.GeneratedAt, &f.MetricName, &f.Host, &f.Service,
+			&f.ForecastTime, &f.PredictedValue, &f.LowerBound, &f.UpperBound,
+			&f.HorizonMinutes, &f.ModelType,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan forecast row: %w", err)
+		}
+		f.GeneratedAt = f.GeneratedAt.UTC()
+		f.ForecastTime = f.ForecastTime.UTC()
+		forecasts = append(forecasts, f)
+	}
+	if forecasts == nil {
+		forecasts = []Forecast{}
+	}
+	return forecasts, nil
+}
+

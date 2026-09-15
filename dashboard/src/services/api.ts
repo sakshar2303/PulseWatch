@@ -133,3 +133,31 @@ export async function nlQuery(prompt: string, metricNames?: string[]): Promise<N
   }
   return res.json();
 }
+
+export interface Forecast {
+  id: number;
+  generated_at: string;
+  metric_name: string;
+  host: string;
+  service: string;
+  forecast_time: string;
+  predicted_value: number;
+  lower_bound?: number;
+  upper_bound?: number;
+  horizon_minutes: number;
+  model_type: string;
+}
+
+export async function fetchForecasts(metric: string, host: string, service: string): Promise<Forecast[]> {
+  const url = new URL(`${API_BASE}/forecasts`, window.location.origin);
+  url.searchParams.set('metric', metric);
+  url.searchParams.set('host', host);
+  url.searchParams.set('service', service);
+  
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    throw new Error(`Failed to fetch forecasts: ${res.statusText}`);
+  }
+  const data = await res.json();
+  return data.forecasts || [];
+}

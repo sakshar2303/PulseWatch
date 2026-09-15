@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { MetricChart } from '../components/charts/MetricChart';
 import { useMetrics, TIME_RANGE_CONFIGS } from '../hooks/useMetrics';
+import { useForecasts } from '../hooks/useForecasts';
 import { TimeRangePreset, HostInfo, ServiceInfo } from '../types';
 import { Sliders, Database, ChevronDown, BrainCircuit, Sparkles, Send, Loader2, AlertCircle } from 'lucide-react';
 import { nlQuery, NLQueryResult } from '../services/api';
@@ -64,6 +65,8 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({
     host: localHost,
     service: localService,
   });
+
+  const { forecasts, loading: forecastLoading } = useForecasts(metricName, localHost, localService);
 
   const unit = metricName.includes('percent')
     ? '%'
@@ -308,7 +311,8 @@ export const ExplorerPage: React.FC<ExplorerPageProps> = ({
       <MetricChart
         title={`${metricName} (${agg.toUpperCase()} / step: ${stepToUse})`}
         data={data}
-        loading={loading}
+        forecasts={forecasts}
+        loading={loading || forecastLoading}
         error={error}
         unit={unit}
         agg={agg}

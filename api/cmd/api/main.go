@@ -59,6 +59,7 @@ func main() {
 	hostsHandler := handler.NewHostsHandler(dbStore)
 	anomaliesHandler := handler.NewAnomaliesHandler(dbStore)
 	alertsHandler := handler.NewAlertsHandler(dbStore)
+	forecastHandler := handler.NewForecastHandler(dbStore)
 	wsHandler := websocket.NewHandler(wsHub)
 	nlQueryHandler := handler.NewNLQueryHandler(cfg.AnthropicAPIKey)
 
@@ -91,6 +92,7 @@ func main() {
 	mux.HandleFunc("POST /api/v1/alerts/rules/{id}/toggle", alertsHandler.HandleToggle)
 	mux.HandleFunc("GET /ws/live", wsHandler.ServeWS)
 	mux.HandleFunc("GET /api/v1/slo", sloHandler.HandleSLO)
+	mux.HandleFunc("GET /api/v1/forecasts", forecastHandler.HandleForecasts)
 	mux.HandleFunc("POST /api/v1/ai/nl-query", nlQueryHandler.HandleNLQuery)
 
 	// Wrap router with middleware chain: tracing → SLI → CORS → handler
