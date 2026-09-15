@@ -103,3 +103,11 @@ export async function resolveAnomaly(id: number): Promise<void> {
     throw new Error(`Failed to resolve anomaly: ${res.statusText}`);
   }
 }
+
+export async function fetchSLO(): Promise<import('../types/omium').SLOResponse> {
+  const res = await fetch(`${API_BASE}/slo`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch SLO metrics: ${res.statusText}`);
+  }
+  return res.json();
+}

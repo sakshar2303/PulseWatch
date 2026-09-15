@@ -5,6 +5,8 @@ import { OverviewPage } from './pages/OverviewPage';
 import { ExplorerPage } from './pages/ExplorerPage';
 import { FleetPage } from './pages/FleetPage';
 import { AnomaliesPage } from './pages/AnomaliesPage';
+import { CheckpointsFeed } from './components/omium/CheckpointsFeed';
+import { SLOSection } from './components/omium/SLOSection';
 import { LiveStreamChart } from './components/charts/LiveStreamChart';
 import { useFleet } from './hooks/useFleet';
 import { useLiveStream } from './hooks/useLiveStream';
@@ -59,7 +61,7 @@ export const App: React.FC = () => {
   const unresolvedCount = anomalies.filter((a) => !a.resolved_at).length;
 
   return (
-    <div className="min-h-screen bg-carbon-950 flex flex-col">
+    <div className="min-h-screen bg-void text-white flex flex-col font-sans selection:bg-omium-coral/30 selection:text-white">
       {/* Header */}
       <Header
         health={health}
@@ -99,14 +101,31 @@ export const App: React.FC = () => {
               anomalies={anomalies}
               refreshInterval={refreshInterval}
               onAnomalyResolved={handleAnomalyResolved}
+              onNavigateToCheckpoints={() => setActivePage('checkpoints')}
             />
+          )}
+
+          {activePage === 'checkpoints' && (
+            <div className="space-y-6 pb-12">
+              <CheckpointsFeed unresolvedAnomalyCount={unresolvedCount} />
+            </div>
+          )}
+
+          {activePage === 'slo' && (
+            <div className="space-y-6 pb-12">
+              <SLOSection />
+            </div>
           )}
 
           {activePage === 'live' && (
             <div className="space-y-6 pb-12">
-              <div className="hud-panel rounded-xl p-6 border border-slate-850">
+              <div className="hud-panel rounded-xl p-6 border border-white/5">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-omium-coral/10 border border-omium-coral/20 text-omium-coral text-xs font-mono mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-omium-coral animate-ping" />
+                  Live JetStream Stream
+                </div>
                 <h2 className="text-lg font-bold text-white tracking-tight">Full-Screen Real-Time Live Telemetry</h2>
-                <p className="text-xs text-slate-400 mt-1 font-mono">
+                <p className="text-xs text-omium-secondary mt-1 font-mono">
                   Sub-millisecond metric events streaming directly from NATS JetStream via WebSocket.
                 </p>
               </div>

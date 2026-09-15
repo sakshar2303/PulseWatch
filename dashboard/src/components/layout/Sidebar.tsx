@@ -5,11 +5,13 @@ import {
   LineChart,
   Server,
   AlertOctagon,
+  ShieldCheck,
+  CheckCircle2,
   Filter,
 } from 'lucide-react';
 import { HostInfo, ServiceInfo } from '../../types';
 
-export type ActivePage = 'overview' | 'live' | 'explorer' | 'fleet' | 'anomalies';
+export type ActivePage = 'overview' | 'checkpoints' | 'slo' | 'live' | 'explorer' | 'fleet' | 'anomalies';
 
 interface SidebarProps {
   activePage: ActivePage;
@@ -36,24 +38,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'live', label: 'Live Stream', icon: Radio, pulse: true },
+    { id: 'checkpoints', label: 'Live Checkpoints', icon: CheckCircle2, pulse: true, badgeText: 'Omium' },
+    { id: 'slo', label: 'SLO Reliability', icon: ShieldCheck },
+    { id: 'live', label: 'Live Telemetry', icon: Radio },
     { id: 'explorer', label: 'Metric Explorer', icon: LineChart },
-    { id: 'fleet', label: 'Fleet & Nodes', icon: Server, badge: hosts.length },
+    { id: 'fleet', label: 'Fleet & Agents', icon: Server, badge: hosts.length },
     {
       id: 'anomalies',
-      label: 'Anomalies',
+      label: 'Anomalies & Audits',
       icon: AlertOctagon,
       alertBadge: unresolvedAnomalyCount,
     },
   ];
 
   return (
-    <aside className="w-64 border-r border-slate-850 bg-carbon-900/60 backdrop-blur-md flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)] sticky top-16 z-20">
-      <div className="p-4 space-y-6">
+    <aside className="w-60 border-r border-white/[0.07] bg-void/70 backdrop-blur-xl flex flex-col justify-between shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 z-20">
+      <div className="p-3.5 space-y-5">
         {/* Navigation Links */}
         <div className="space-y-1">
-          <div className="px-3 pb-2 text-[10px] font-mono uppercase tracking-wider text-slate-500">
-            Monitoring
+          <div className="px-3 pb-2 text-[10px] font-mono uppercase tracking-wider text-omium-tertiary">
+            Diagnostics & Verifier
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -62,54 +66,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onPageChange(item.id as ActivePage)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   isActive
-                    ? 'bg-neon-cyan/15 text-neon-cyan border border-neon-cyan/30 shadow-sm shadow-neon-cyan/5'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                    ? 'bg-omium-coral/15 text-omium-coral font-semibold border border-omium-coral/30 shadow-sm shadow-omium-coral/10'
+                    : 'text-omium-secondary hover:text-white hover:bg-white/[0.04]'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-neon-cyan' : 'text-slate-400'}`} />
-                  <span>{item.label}</span>
+                <div className="flex items-center gap-2.5">
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-omium-coral' : 'text-omium-tertiary'}`} />
+                  <span className="truncate">{item.label}</span>
                 </div>
 
-                {item.pulse && (
-                  <span className="flex h-2 w-2 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-cyan opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-neon-cyan" />
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {item.pulse && (
+                    <span className="flex h-1.5 w-1.5 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-omium-coral opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-omium-coral" />
+                    </span>
+                  )}
 
-                {item.badge !== undefined && (
-                  <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
-                    {item.badge}
-                  </span>
-                )}
+                  {item.badgeText && (
+                    <span className="text-[9px] font-mono uppercase px-1 py-0.2 rounded bg-omium-coral/10 text-omium-coral border border-omium-coral/20">
+                      {item.badgeText}
+                    </span>
+                  )}
 
-                {item.alertBadge !== undefined && item.alertBadge > 0 && (
-                  <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">
-                    {item.alertBadge}
-                  </span>
-                )}
+                  {item.badge !== undefined && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-void-card border border-white/5 text-omium-tertiary">
+                      {item.badge}
+                    </span>
+                  )}
+
+                  {item.alertBadge !== undefined && item.alertBadge > 0 && (
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-omium-rose/20 text-omium-rose border border-omium-rose/30 animate-pulse">
+                      {item.alertBadge}
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
         </div>
 
-        {/* Global Filter Section */}
-        <div className="pt-4 border-t border-slate-800/60 space-y-3">
-          <div className="flex items-center gap-1.5 px-3 text-[10px] font-mono uppercase tracking-wider text-slate-500">
+        {/* Scope Filter Section */}
+        <div className="pt-3 border-t border-white/[0.06] space-y-2.5">
+          <div className="flex items-center gap-1.5 px-3 text-[10px] font-mono uppercase tracking-wider text-omium-tertiary">
             <Filter className="w-3 h-3" />
-            <span>Scope Filter</span>
+            <span>Telemetry Scope</span>
           </div>
 
           {/* Host Filter */}
           <div className="px-3 space-y-1">
-            <label className="text-xs text-slate-400 font-mono block">Host</label>
+            <label className="text-[11px] text-omium-tertiary font-mono block">Host</label>
             <select
               value={selectedHost}
               onChange={(e) => onHostChange(e.target.value)}
-              className="w-full bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg px-2.5 py-2 outline-none focus:border-neon-cyan/50"
+              className="w-full bg-void-card border border-white/[0.08] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-omium-coral/50 font-mono"
             >
               <option value="">All Hosts ({hosts.length})</option>
               {hosts.map((h) => (
@@ -122,11 +134,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Service Filter */}
           <div className="px-3 space-y-1">
-            <label className="text-xs text-slate-400 font-mono block">Service</label>
+            <label className="text-[11px] text-omium-tertiary font-mono block">Service</label>
             <select
               value={selectedService}
               onChange={(e) => onServiceChange(e.target.value)}
-              className="w-full bg-carbon-850 border border-slate-800 text-slate-200 text-xs rounded-lg px-2.5 py-2 outline-none focus:border-neon-cyan/50"
+              className="w-full bg-void-card border border-white/[0.08] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-omium-coral/50 font-mono"
             >
               <option value="">All Services ({services.length})</option>
               {services.map((s) => (
@@ -140,9 +152,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer Info */}
-      <div className="p-4 border-t border-slate-850 text-[11px] font-mono text-slate-500 flex items-center justify-between">
-        <span>TimescaleDB 16</span>
-        <span className="text-neon-cyan/70">NATS JetStream</span>
+      <div className="p-3.5 border-t border-white/[0.06] text-[10px] font-mono text-omium-tertiary flex items-center justify-between">
+        <span className="text-omium-secondary">TimescaleDB Hypertable</span>
+        <span className="text-omium-coral font-medium">NATS JetStream</span>
       </div>
     </aside>
   );

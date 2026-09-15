@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, RefreshCw, Database, Cpu, Wifi } from 'lucide-react';
+import { RefreshCw, ExternalLink } from 'lucide-react';
 import { HealthResponse, TimeRangePreset } from '../../types';
 import { ConnectionStatus } from '../../services/websocket';
 import { TIME_RANGE_CONFIGS } from '../../hooks/useMetrics';
@@ -27,75 +27,65 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const tsdbHealthy = health?.dependencies?.timescaledb?.status === 'healthy';
   const natsHealthy = health?.dependencies?.nats?.status === 'healthy';
+  const allHealthy = tsdbHealthy && natsHealthy && wsStatus === 'connected';
 
   return (
-    <header className="h-16 border-b border-slate-850 bg-carbon-900/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30">
-      {/* Brand & HUD status */}
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan glow-cyan">
-            <Activity className="w-5 h-5 animate-pulse" />
+    <header className="h-14 border-b border-white/[0.07] bg-void/90 backdrop-blur-xl px-5 flex items-center justify-between sticky top-0 z-30">
+      {/* Left: Brand & Breadcrumb */}
+      <div className="flex items-center gap-4">
+        {/* Brand Icon */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-omium-coral/15 border border-omium-coral/30 flex items-center justify-center text-omium-coral shadow-omium-glow">
+            <span className="font-mono font-bold text-xs">PW</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg tracking-tight text-white">PulseWatch</span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20">
-                v0.1.0
-              </span>
-            </div>
-            <span className="text-xs text-slate-400 font-mono">Mission Control</span>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-sm tracking-tight text-white font-sans">PulseWatch</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-omium-secondary border border-white/10">
+              v1.0-omium
+            </span>
           </div>
         </div>
 
-        {/* System HUD Badges */}
-        <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-slate-800 text-xs font-mono">
-          {/* TimescaleDB HUD */}
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${
-            tsdbHealthy ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-400' : 'bg-rose-950/40 border-rose-800/40 text-rose-400'
-          }`}>
-            <Database className="w-3.5 h-3.5" />
-            <span>TimescaleDB</span>
-            <span className={`w-1.5 h-1.5 rounded-full ${tsdbHealthy ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
-          </div>
+        {/* Breadcrumb Path */}
+        <div className="hidden md:flex items-center gap-1.5 text-xs font-mono text-omium-tertiary pl-4 border-l border-white/[0.08]">
+          <span className="text-omium-secondary hover:text-white cursor-pointer transition-colors">prod-cluster</span>
+          <span>/</span>
+          <span className="text-omium-coral font-medium">ground-truth-verifier</span>
+        </div>
 
-          {/* NATS JetStream HUD */}
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${
-            natsHealthy ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-400' : 'bg-amber-950/40 border-amber-800/40 text-amber-400'
-          }`}>
-            <Cpu className="w-3.5 h-3.5" />
-            <span>NATS</span>
-            <span className={`w-1.5 h-1.5 rounded-full ${natsHealthy ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-          </div>
-
-          {/* Live WebSocket Stream HUD */}
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${
-            wsStatus === 'connected'
-              ? 'bg-cyan-950/40 border-cyan-800/40 text-cyan-400'
-              : wsStatus === 'connecting'
-              ? 'bg-amber-950/40 border-amber-800/40 text-amber-400'
-              : 'bg-slate-850 border-slate-750 text-slate-400'
-          }`}>
-            <Wifi className="w-3.5 h-3.5" />
-            <span>Live WS</span>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              wsStatus === 'connected' ? 'bg-neon-cyan animate-ping' : wsStatus === 'connecting' ? 'bg-amber-400 animate-bounce' : 'bg-slate-500'
-            }`} />
-          </div>
+        {/* Live Ground-Truth Status Pill */}
+        <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-void-card border border-white/[0.08] text-xs font-mono">
+          <span className={`w-1.5 h-1.5 rounded-full ${allHealthy ? 'bg-omium-emerald animate-pulse' : 'bg-omium-coral animate-ping'}`} />
+          <span className="text-white text-[11px] font-medium">
+            {allHealthy ? 'Watching writes · 0 silent failures' : 'Pipeline initializing...'}
+          </span>
         </div>
       </div>
 
-      {/* Controls: Time presets & Auto-refresh */}
-      <div className="flex items-center gap-3">
+      {/* Right: Tracing, Time Presets & Auto-refresh */}
+      <div className="flex items-center gap-2.5">
+        {/* Jaeger Distributed Traces Link */}
+        <a
+          href="http://localhost:16686"
+          target="_blank"
+          rel="noreferrer"
+          title="Open Jaeger Distributed Traces"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-void-card hover:bg-void-elevated border border-white/10 hover:border-omium-sky/40 text-xs font-mono text-omium-sky transition-colors"
+        >
+          <span>Jaeger UI</span>
+          <ExternalLink className="w-3 h-3 text-omium-sky" />
+        </a>
+
         {/* Time Presets */}
-        <div className="flex items-center bg-carbon-850 p-1 rounded-lg border border-slate-800">
+        <div className="flex items-center bg-void-card p-0.5 rounded-lg border border-white/[0.08]">
           {(Object.keys(TIME_RANGE_CONFIGS) as TimeRangePreset[]).map((preset) => (
             <button
               key={preset}
               onClick={() => onTimeRangeChange(preset)}
-              className={`px-2.5 py-1 text-xs font-mono rounded-md transition-all ${
+              className={`px-2 py-1 text-xs font-mono rounded-md transition-all ${
                 timeRange === preset
-                  ? 'bg-neon-cyan/20 text-neon-cyan font-semibold shadow-sm border border-neon-cyan/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  ? 'bg-omium-coral/20 text-omium-coral font-semibold border border-omium-coral/30 shadow-sm'
+                  : 'text-omium-secondary hover:text-white hover:bg-white/5'
               }`}
             >
               {preset}
@@ -104,18 +94,18 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Auto Refresh Interval */}
-        <div className="flex items-center bg-carbon-850 rounded-lg border border-slate-800 px-2 py-1 text-xs font-mono text-slate-300">
-          <span className="text-slate-500 mr-2">Sync:</span>
+        <div className="hidden sm:flex items-center bg-void-card rounded-lg border border-white/[0.08] px-2 py-1 text-xs font-mono text-omium-secondary">
+          <span className="text-omium-tertiary mr-1.5">Sync:</span>
           <select
             value={refreshInterval}
             onChange={(e) => onRefreshIntervalChange(Number(e.target.value))}
-            className="bg-transparent text-slate-200 outline-none cursor-pointer"
+            className="bg-transparent text-white outline-none cursor-pointer text-xs"
           >
-            <option value={5000} className="bg-carbon-900">5s</option>
-            <option value={10000} className="bg-carbon-900">10s</option>
-            <option value={30000} className="bg-carbon-900">30s</option>
-            <option value={60000} className="bg-carbon-900">1m</option>
-            <option value={0} className="bg-carbon-900">Off</option>
+            <option value={5000} className="bg-void-card">5s</option>
+            <option value={10000} className="bg-void-card">10s</option>
+            <option value={30000} className="bg-void-card">30s</option>
+            <option value={60000} className="bg-void-card">1m</option>
+            <option value={0} className="bg-void-card">Off</option>
           </select>
         </div>
 
@@ -124,9 +114,9 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onManualRefresh}
           title="Refresh All Metrics"
           disabled={isRefreshing}
-          className="flex items-center justify-center w-8 h-8 rounded-lg bg-carbon-850 border border-slate-800 hover:border-neon-cyan/40 hover:text-neon-cyan text-slate-400 transition-colors"
+          className="flex items-center justify-center w-7 h-7 rounded-lg bg-void-card border border-white/[0.08] hover:border-omium-coral/40 hover:text-omium-coral text-omium-secondary transition-colors"
         >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-neon-cyan' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-omium-coral' : ''}`} />
         </button>
       </div>
     </header>
