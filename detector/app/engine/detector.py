@@ -24,6 +24,7 @@ from typing import List, Tuple
 from app.config import settings
 from app.db.session import get_pool
 from app.models.isolation_forest import model_registry
+from app.engine.ai import generate_rca_summary
 
 log = logging.getLogger(__name__)
 
@@ -51,6 +52,10 @@ INSERT INTO anomalies
 VALUES
     ($1, $2, $3, $4, $5, 'ml_isolation_forest', $6, $7, $8, $9::jsonb)
 RETURNING id
+"""
+
+_UPDATE_RCA_SQL = """
+UPDATE anomalies SET rca_summary = $1 WHERE id = $2
 """
 
 
@@ -143,10 +148,34 @@ class MLDetector:
                 )
                 total_anomalies += 1
 
+                # Async RCA generation
+                asyncio.create_task(self._generate_and_save_rca(
+                    anomaly_id=anomaly_id,
+                    metric=metric,
+                    host=host,
+                    service=service,
+                    severity=result.severity,
+                    current_value=current_value,
+                    score=result.score,
+                    samples=samples,
+                ))
+
             except Exception:
                 log.exception("MLDetector error for series %s/%s/%s", metric, host, service)
 
         return total_anomalies
+
+    async def _generate_and_save_rca(self, anomaly_id: int, **kwargs):
+        """Helper to generate RCA via LLM and save it to the DB without blocking."""
+        rca = await generate_rca_summary(**kwargs)
+        if rca:
+            try:
+                pool = await get_pool()
+                async with pool.acquire() as conn:
+                    await conn.execute(_UPDATE_RCA_SQL, rca, anomaly_id)
+                log.info(f"Saved LLM RCA for anomaly {anomaly_id}")
+            except Exception as e:
+                log.error(f"Failed to save RCA for anomaly {anomaly_id}: {e}")
 
 
 # Module-level singleton

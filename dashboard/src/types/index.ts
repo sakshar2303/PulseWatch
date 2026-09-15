@@ -53,6 +53,7 @@ export interface Anomaly {
   score?: number | null;
   resolved_at?: string | null;
   metadata?: Record<string, any>;
+  rca_summary?: string | null;
 }
 
 export interface AnomaliesResponse {

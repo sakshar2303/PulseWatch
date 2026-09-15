@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     score_critical_threshold: float = float(os.getenv("SCORE_CRITICAL_THRESHOLD", "-0.15"))
     score_warning_threshold: float = float(os.getenv("SCORE_WARNING_THRESHOLD", "0.0"))
 
+    # LLM Settings
+    anthropic_api_key: str | None = os.getenv("ANTHROPIC_API_KEY")
+
     model_config = SettingsConfigDict(env_prefix="DETECTOR_", extra="ignore")
 
 

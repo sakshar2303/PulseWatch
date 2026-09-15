@@ -60,6 +60,7 @@ type Anomaly struct {
 	Score       *float64       `json:"score,omitempty"`
 	ResolvedAt  *time.Time     `json:"resolved_at,omitempty"`
 	Metadata    map[string]any `json:"metadata"`
+	RCASummary  *string        `json:"rca_summary,omitempty"`
 }
 
 // AlertRule represents a user-defined threshold alerting rule.
@@ -86,6 +87,7 @@ type Store interface {
 	GetServices(ctx context.Context) ([]ServiceInfo, error)
 	GetHosts(ctx context.Context) ([]HostInfo, error)
 	GetAnomalies(ctx context.Context, service, severity string, resolved *bool, limit, offset int) ([]Anomaly, int, error)
+	UpdateAnomalyRCA(ctx context.Context, id int64, rca string) error
 	ResolveAnomaly(ctx context.Context, id int64) error
 	GetAlertRules(ctx context.Context, enabledOnly bool) ([]AlertRule, error)
 	GetAlertRule(ctx context.Context, id int64) (*AlertRule, error)
@@ -438,7 +440,7 @@ func (s *PgxStore) GetAnomalies(ctx context.Context, service, severity string, r
 	}
 
 	selectQuery := fmt.Sprintf(`
-		SELECT id, detected_at, metric_name, host, service, severity, type, description, value, threshold, score, resolved_at, metadata
+		SELECT id, detected_at, metric_name, host, service, severity, type, description, value, threshold, score, resolved_at, metadata, rca_summary
 		FROM anomalies
 		%s
 		ORDER BY detected_at DESC
@@ -460,7 +462,7 @@ func (s *PgxStore) GetAnomalies(ctx context.Context, service, severity string, r
 		if err := rows.Scan(
 			&a.ID, &a.DetectedAt, &a.MetricName, &a.Host, &a.Service,
 			&a.Severity, &a.Type, &a.Description, &a.Value,
-			&a.Threshold, &a.Score, &a.ResolvedAt, &rawMeta,
+			&a.Threshold, &a.Score, &a.ResolvedAt, &rawMeta, &a.RCASummary,
 		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan anomaly row: %w", err)
 		}
@@ -485,6 +487,19 @@ func (s *PgxStore) GetAnomalies(ctx context.Context, service, severity string, r
 		anomalies = []Anomaly{}
 	}
 	return anomalies, total, nil
+}
+
+// UpdateAnomalyRCA updates the root cause analysis summary for an anomaly.
+func (s *PgxStore) UpdateAnomalyRCA(ctx context.Context, id int64, rca string) error {
+	query := `UPDATE anomalies SET rca_summary = $1 WHERE id = $2`
+	cmd, err := s.pool.Exec(ctx, query, rca, id)
+	if err != nil {
+		return fmt.Errorf("failed to update anomaly RCA: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return fmt.Errorf("anomaly not found")
+	}
+	return nil
 }
 
 // ResolveAnomaly sets resolved_at = NOW() for the specified anomaly.

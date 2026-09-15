@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Anomaly } from '../../types';
 import { resolveAnomaly } from '../../services/api';
-import { AlertOctagon, CheckCircle, Clock, Check } from 'lucide-react';
+import { AlertOctagon, CheckCircle, Clock, Check, BrainCircuit } from 'lucide-react';
 
 interface AnomalyFeedProps {
   anomalies: Anomaly[];
@@ -119,6 +119,19 @@ export const AnomalyFeed: React.FC<AnomalyFeedProps> = ({
                     </div>
 
                     <p className="text-slate-300 text-xs">{anomaly.description}</p>
+
+                    {/* AI Root Cause Analysis */}
+                    {anomaly.rca_summary && (
+                      <div className="mt-2 p-2.5 rounded-lg border border-violet-500/20 bg-violet-950/20">
+                        <div className="flex items-start gap-2">
+                          <BrainCircuit className="w-3.5 h-3.5 text-violet-400 mt-0.5 shrink-0" style={{ filter: 'drop-shadow(0 0 4px rgb(139 92 246 / 0.7))' }} />
+                          <div>
+                            <p className="text-[10px] font-mono text-violet-400 font-semibold uppercase tracking-wider mb-0.5">AI Root Cause Analysis</p>
+                            <p className="text-[11px] text-slate-300 leading-relaxed">{anomaly.rca_summary}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center gap-4 text-[11px] font-mono text-slate-400">
                       <span>Value: <strong className="text-white">{anomaly.value.toFixed(1)}</strong></span>
