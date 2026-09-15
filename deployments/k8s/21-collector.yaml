@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: collector
+  namespace: pulsewatch
+  labels:
+    app.kubernetes.io/name: collector
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: collector
+    spec:
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - name: collector
+          image: pulsewatch/collector:latest
+          env:
+            - name: NATS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: pulsewatch-config
+                  key: NATS_URL
+            - name: COLLECTION_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: pulsewatch-config
+                  key: COLLECTION_INTERVAL
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys

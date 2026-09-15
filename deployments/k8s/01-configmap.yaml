@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pulsewatch-config
+  namespace: pulsewatch
+data:
+  TSDB_HOST: "timescaledb.pulsewatch.svc.cluster.local"
+  TSDB_PORT: "5432"
+  TSDB_DATABASE: "pulsewatch"
+  NATS_URL: "nats://nats.pulsewatch.svc.cluster.local:4222"
+  API_PORT: "8080"
+  INGESTION_PORT: "8081"
+  DETECTOR_PORT: "8000"
+  LOG_LEVEL: "info"
+  COLLECTION_INTERVAL: "5s"
+  EVAL_INTERVAL_SECONDS: "30"
+  LOOKBACK_MINUTES: "30"

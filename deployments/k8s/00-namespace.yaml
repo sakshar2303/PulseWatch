@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pulsewatch
+  labels:
+    app.kubernetes.io/name: pulsewatch
+    app.kubernetes.io/part-of: pulsewatch

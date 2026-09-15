@@ -1,0 +1,198 @@
+# ==============================================================================
+# PulseWatch — Full-Stack Production Docker Compose
+# Orchestrates all 7 services: TimescaleDB, NATS, Ingestion, Collector,
+# Query/API, Anomaly Detector, and React Dashboard.
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # TimescaleDB — Distributed Time-Series Database
+  # ----------------------------------------------------------------------------
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: pulsewatch-tsdb-prod
+    restart: unless-stopped
+    ports:
+      - "${TSDB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${TSDB_USER:-pulsewatch}
+      POSTGRES_PASSWORD: ${TSDB_PASSWORD:-changeme}
+      POSTGRES_DB: ${TSDB_DATABASE:-pulsewatch}
+    volumes:
+      - tsdb_prod_data:/var/lib/postgresql/data
+      - ./migrations/001_create_metrics.up.sql:/docker-entrypoint-initdb.d/01_metrics.sql:ro
+      - ./migrations/002_create_anomalies.up.sql:/docker-entrypoint-initdb.d/02_anomalies.sql:ro
+      - ./migrations/003_create_alert_rules.up.sql:/docker-entrypoint-initdb.d/03_rules.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TSDB_USER:-pulsewatch} -d ${TSDB_DATABASE:-pulsewatch}"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    networks:
+      - pulsewatch-net
+
+  # ----------------------------------------------------------------------------
+  # NATS JetStream — High-Performance Message Queue
+  # ----------------------------------------------------------------------------
+  nats:
+    image: nats:latest
+    container_name: pulsewatch-nats-prod
+    restart: unless-stopped
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["--jetstream", "--store_dir", "/data", "--http_port", "8222"]
+    volumes:
+      - nats_prod_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - pulsewatch-net
+
+  # ----------------------------------------------------------------------------
+  # Ingestion Service — Pulls from JetStream and batch-inserts into TimescaleDB
+  # ----------------------------------------------------------------------------
+  ingestion:
+    build:
+      context: .
+      dockerfile: ingestion/Dockerfile
+    container_name: pulsewatch-ingestion-prod
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://${TSDB_USER:-pulsewatch}:${TSDB_PASSWORD:-changeme}@timescaledb:5432/${TSDB_DATABASE:-pulsewatch}?sslmode=disable"
+      NATS_URL: "nats://nats:4222"
+      PORT: "8081"
+      LOG_LEVEL: "info"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger:4317"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  # ----------------------------------------------------------------------------
+  # Collector Agent — Collects host and service telemetry
+  # ----------------------------------------------------------------------------
+  collector:
+    build:
+      context: .
+      dockerfile: collector/Dockerfile
+    container_name: pulsewatch-collector-prod
+    restart: unless-stopped
+    environment:
+      NATS_URL: "nats://nats:4222"
+      COLLECTION_INTERVAL: "5s"
+      LOG_LEVEL: "info"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger:4317"
+    depends_on:
+      nats:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  # ----------------------------------------------------------------------------
+  # Query/API Service — REST + WebSocket Server
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: pulsewatch-api-prod
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: "postgresql://${TSDB_USER:-pulsewatch}:${TSDB_PASSWORD:-changeme}@timescaledb:5432/${TSDB_DATABASE:-pulsewatch}?sslmode=disable"
+      NATS_URL: "nats://nats:4222"
+      PORT: "8080"
+      LOG_LEVEL: "info"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger:4317"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  # ----------------------------------------------------------------------------
+  # Anomaly Detector — ML Isolation Forest & Threshold Rules Evaluator
+  # ----------------------------------------------------------------------------
+  detector:
+    build:
+      context: .
+      dockerfile: detector/Dockerfile
+    container_name: pulsewatch-detector-prod
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DETECTOR_DB_URL: "postgresql://${TSDB_USER:-pulsewatch}:${TSDB_PASSWORD:-changeme}@timescaledb:5432/${TSDB_DATABASE:-pulsewatch}?sslmode=disable"
+      DETECTOR_PORT: "8000"
+      DETECTOR_HOST: "0.0.0.0"
+      EVAL_INTERVAL_SECONDS: "30"
+      LOOKBACK_MINUTES: "30"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger:4317"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  # ----------------------------------------------------------------------------
+  # Dashboard — React SPA served via Nginx Reverse Proxy
+  # ----------------------------------------------------------------------------
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    container_name: pulsewatch-dashboard-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  # ----------------------------------------------------------------------------
+  # Jaeger — Distributed Tracing Collector & UI
+  # ----------------------------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: pulsewatch-jaeger-prod
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16687"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - pulsewatch-net
+
+networks:
+  pulsewatch-net:
+    driver: bridge
+
+volumes:
+  tsdb_prod_data:
+    driver: local
+  nats_prod_data:
+    driver: local

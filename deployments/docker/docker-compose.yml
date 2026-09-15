@@ -1,0 +1,141 @@
+# ==============================================================================
+# PulseWatch — Docker Deployment Manifest
+# (Symlink / mirror of docker-compose.prod.yml with root context)
+# ==============================================================================
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: pulsewatch-tsdb
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${TSDB_USER:-pulsewatch}
+      POSTGRES_PASSWORD: ${TSDB_PASSWORD:-changeme}
+      POSTGRES_DB: ${TSDB_DATABASE:-pulsewatch}
+    volumes:
+      - tsdb_data:/var/lib/postgresql/data
+      - ../../migrations/001_create_metrics.up.sql:/docker-entrypoint-initdb.d/01_metrics.sql:ro
+      - ../../migrations/002_create_anomalies.up.sql:/docker-entrypoint-initdb.d/02_anomalies.sql:ro
+      - ../../migrations/003_create_alert_rules.up.sql:/docker-entrypoint-initdb.d/03_rules.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TSDB_USER:-pulsewatch} -d ${TSDB_DATABASE:-pulsewatch}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pulsewatch-net
+
+  nats:
+    image: nats:latest
+    container_name: pulsewatch-nats
+    restart: unless-stopped
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["--jetstream", "--store_dir", "/data", "--http_port", "8222"]
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pulsewatch-net
+
+  ingestion:
+    build:
+      context: ../..
+      dockerfile: ingestion/Dockerfile
+    container_name: pulsewatch-ingestion
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://${TSDB_USER:-pulsewatch}:${TSDB_PASSWORD:-changeme}@timescaledb:5432/${TSDB_DATABASE:-pulsewatch}?sslmode=disable"
+      NATS_URL: "nats://nats:4222"
+      PORT: "8081"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  collector:
+    build:
+      context: ../..
+      dockerfile: collector/Dockerfile
+    container_name: pulsewatch-collector
+    restart: unless-stopped
+    environment:
+      NATS_URL: "nats://nats:4222"
+      COLLECTION_INTERVAL: "5s"
+    depends_on:
+      nats:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  api:
+    build:
+      context: ../..
+      dockerfile: api/Dockerfile
+    container_name: pulsewatch-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: "postgresql://${TSDB_USER:-pulsewatch}:${TSDB_PASSWORD:-changeme}@timescaledb:5432/${TSDB_DATABASE:-pulsewatch}?sslmode=disable"
+      NATS_URL: "nats://nats:4222"
+      PORT: "8080"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  detector:
+    build:
+      context: ../..
+      dockerfile: detector/Dockerfile
+    container_name: pulsewatch-detector
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DETECTOR_DB_URL: "postgresql://${TSDB_USER:-pulsewatch}:${TSDB_PASSWORD:-changeme}@timescaledb:5432/${TSDB_DATABASE:-pulsewatch}?sslmode=disable"
+      DETECTOR_PORT: "8000"
+      DETECTOR_HOST: "0.0.0.0"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+  dashboard:
+    build:
+      context: ../..
+      dockerfile: dashboard/Dockerfile
+    container_name: pulsewatch-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - pulsewatch-net
+
+networks:
+  pulsewatch-net:
+    driver: bridge
+
+volumes:
+  tsdb_data:
+  nats_data:
