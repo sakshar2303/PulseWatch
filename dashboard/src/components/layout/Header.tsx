@@ -13,6 +13,7 @@ interface HeaderProps {
   onManualRefresh: () => void;
   isRefreshing: boolean;
   onOpenCommandPalette?: () => void;
+  onLogoClick?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   onManualRefresh,
   isRefreshing,
   onOpenCommandPalette,
+  onLogoClick,
 }) => {
   const tsdbHealthy = health?.dependencies?.timescaledb?.status === 'healthy';
   const natsHealthy = health?.dependencies?.nats?.status === 'healthy';
@@ -35,7 +37,13 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Left: Brand & Breadcrumb */}
       <div className="flex items-center gap-4">
         {/* Brand Icon */}
-        <div className="flex items-center gap-2.5">
+        <div
+          className="flex items-center gap-2.5 cursor-pointer"
+          onClick={onLogoClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && onLogoClick?.()}
+        >
           <div className="w-7 h-7 rounded-lg bg-omium-coral/15 border border-omium-coral/30 flex items-center justify-center text-omium-coral shadow-omium-glow">
             <span className="font-mono font-bold text-xs">PW</span>
           </div>

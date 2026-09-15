@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Radio, CheckCircle2, ShieldCheck, Server, AlertOctagon, Zap, ExternalLink, Activity, Network } from 'lucide-react';
+import { Search, Radio, CheckCircle2, ShieldCheck, Server, AlertOctagon, Zap, ExternalLink, Activity, Network, Cpu } from 'lucide-react';
 import { ActivePage } from '../layout/Sidebar';
 
 interface CommandItem {
@@ -28,44 +28,53 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   const commands: CommandItem[] = [
     {
+      id: 'nav-welcome',
+      title: 'Go to Welcome & Product Tour',
+      category: 'Navigation',
+      icon: Activity,
+      action: () => { onNavigate('welcome'); onClose(); },
+    },
+    {
       id: 'nav-overview',
       title: 'Go to Overview Dashboard',
       category: 'Navigation',
       icon: Activity,
-      action: () => {
-        onNavigate('overview');
-        onClose();
-      },
+      action: () => { onNavigate('overview'); onClose(); },
     },
     {
       id: 'nav-checkpoints',
       title: 'Go to Live Checkpoints & Run Feed',
       category: 'Navigation',
       icon: CheckCircle2,
-      action: () => {
-        onNavigate('checkpoints');
-        onClose();
-      },
+      action: () => { onNavigate('checkpoints'); onClose(); },
     },
     {
       id: 'nav-topology',
       title: 'Go to Service Topology & Pipeline Map',
       category: 'Navigation',
       icon: Network,
-      action: () => {
-        onNavigate('topology');
-        onClose();
-      },
+      action: () => { onNavigate('topology'); onClose(); },
     },
     {
       id: 'nav-slo',
       title: 'Go to SLO Reliability & Error Budget',
       category: 'Navigation',
       icon: ShieldCheck,
-      action: () => {
-        onNavigate('slo');
-        onClose();
-      },
+      action: () => { onNavigate('slo'); onClose(); },
+    },
+    {
+      id: 'nav-diagnostics',
+      title: 'Go to Agent Diagnostics (Goroutines / GC)',
+      category: 'Navigation',
+      icon: Cpu,
+      action: () => { onNavigate('diagnostics'); onClose(); },
+    },
+    {
+      id: 'nav-chaos',
+      title: 'Go to Chaos Lab — Inject Failures',
+      category: 'Simulation & Chaos',
+      icon: Zap,
+      action: () => { onNavigate('chaos'); onClose(); },
     },
     {
       id: 'nav-audit',

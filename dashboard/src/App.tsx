@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Header } from './components/layout/Header';
 import { Sidebar, ActivePage } from './components/layout/Sidebar';
 import { OverviewPage } from './pages/OverviewPage';
+import { WelcomePage } from './pages/WelcomePage';
 import { ExplorerPage } from './pages/ExplorerPage';
 import { FleetPage } from './pages/FleetPage';
 import { AnomaliesPage } from './pages/AnomaliesPage';
 import { AuditPage } from './pages/AuditPage';
+import { AgentDiagnosticsPage } from './pages/AgentDiagnosticsPage';
+import { ChaosLabPage } from './pages/ChaosLabPage';
 import { CheckpointsFeed } from './components/omium/CheckpointsFeed';
 import { ServiceMap } from './components/omium/ServiceMap';
 import { SLOSection } from './components/omium/SLOSection';
@@ -89,6 +92,7 @@ export const App: React.FC = () => {
         onManualRefresh={handleManualRefresh}
         isRefreshing={isRefreshing}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onLogoClick={() => setActivePage('welcome')}
       />
 
       {/* Body */}
@@ -108,6 +112,10 @@ export const App: React.FC = () => {
 
         {/* Main Content Area */}
         <main className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full">
+          {activePage === 'welcome' && (
+            <WelcomePage onNavigate={(p) => setActivePage(p)} />
+          )}
+
           {activePage === 'overview' && (
             <OverviewPage
               timeRange={timeRange}
@@ -143,6 +151,18 @@ export const App: React.FC = () => {
           {activePage === 'audit' && (
             <div className="space-y-6 pb-12">
               <AuditPage />
+            </div>
+          )}
+
+          {activePage === 'diagnostics' && (
+            <div className="space-y-6 pb-12">
+              <AgentDiagnosticsPage />
+            </div>
+          )}
+
+          {activePage === 'chaos' && (
+            <div className="space-y-6 pb-12">
+              <ChaosLabPage />
             </div>
           )}
 

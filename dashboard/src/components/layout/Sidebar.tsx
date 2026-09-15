@@ -10,10 +10,13 @@ import {
   Filter,
   Network,
   FileCheck,
+  Sparkles,
+  Cpu,
+  Zap,
 } from 'lucide-react';
 import { HostInfo, ServiceInfo } from '../../types';
 
-export type ActivePage = 'overview' | 'checkpoints' | 'topology' | 'slo' | 'audit' | 'live' | 'explorer' | 'fleet' | 'anomalies';
+export type ActivePage = 'welcome' | 'overview' | 'checkpoints' | 'topology' | 'slo' | 'audit' | 'live' | 'explorer' | 'fleet' | 'anomalies' | 'diagnostics' | 'chaos';
 
 interface SidebarProps {
   activePage: ActivePage;
@@ -39,10 +42,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   unresolvedAnomalyCount,
 }) => {
   const navItems = [
+    { id: 'welcome', label: 'Welcome & Tour', icon: Sparkles, badgeText: 'Tour' },
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'checkpoints', label: 'Live Checkpoints', icon: CheckCircle2, pulse: true, badgeText: 'Omium' },
     { id: 'topology', label: 'Service Topology', icon: Network },
     { id: 'slo', label: 'SLO Reliability', icon: ShieldCheck },
+    { id: 'diagnostics', label: 'Agent Diagnostics', icon: Cpu, badgeText: 'New' },
+    { id: 'chaos', label: 'Chaos Lab', icon: Zap, badgeText: 'Lab' },
     { id: 'audit', label: 'Failure Audit Proof', icon: FileCheck, badgeText: 'Proof' },
     { id: 'live', label: 'Live Telemetry', icon: Radio },
     { id: 'explorer', label: 'Metric Explorer', icon: LineChart },
