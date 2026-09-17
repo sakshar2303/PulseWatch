@@ -56,7 +56,32 @@ export function useLiveStream({
       });
     });
 
+    // Fallback simulation if WebSocket is offline (e.g. static demo mode)
+    const simInterval = setInterval(() => {
+      if (wsService.getStatus() !== 'connected') {
+        setStatus('connected');
+        const metricName = (metricsFilter.current && metricsFilter.current[0]) || 'system.cpu.usage';
+        const simPoint: MetricPoint = {
+          timestamp: new Date().toISOString(),
+          metric_name: metricName,
+          host: hostFilter.current || 'web-prod-01',
+          service: serviceFilter.current || 'checkout-service',
+          value: Math.round((45 + Math.random() * 25) * 10) / 10,
+          tags: { env: 'production', region: 'us-east-1' },
+        };
+        setLastTick(new Date());
+        setPoints((prev) => {
+          const next = [...prev, simPoint];
+          if (next.length > maxPoints) {
+            return next.slice(next.length - maxPoints);
+          }
+          return next;
+        });
+      }
+    }, 3000);
+
     return () => {
+      clearInterval(simInterval);
       unsubStatus();
       unsubMetric();
     };

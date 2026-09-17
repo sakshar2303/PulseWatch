@@ -1,6 +1,12 @@
 # PulseWatch ⚡
 > **Autonomous Agentic SRE & Cloud-Native Observability Platform** with LLM-as-a-Judge Anomaly Verification, Closed-Loop Auto-Remediation, NATS JetStream Backpressure, and Sub-20ms p99 Ingestion.
 
+<div align="center">
+
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-PulseWatch%20Mission%20Control-00f0ff?style=for-the-badge&logo=vercel&logoColor=white)](https://sakshar2303.github.io/PulseWatch/)
+
+</div>
+
 [![Go Tests](https://img.shields.io/badge/go%20tests-38%20passed-10b981?style=flat-square)](./api)
 [![Python Tests](https://img.shields.io/badge/pytest-41%20passed-10b981?style=flat-square)](./detector/tests)
 [![Chaos Resilience](https://img.shields.io/badge/chaos%20resilience-5%2F5%20(100%25)-6366f1?style=flat-square)](./docs/chaos_test_results.md)
@@ -10,7 +16,8 @@
 [![AI Agent](https://img.shields.io/badge/ai%20agent-Claude%203.5%20Sonnet-D97706?style=flat-square)](https://anthropic.com)
 [![License](https://img.shields.io/badge/license-MIT-slate?style=flat-square)](./LICENSE)
 
-![PulseWatch Mission Control Dashboard](docs/assets/dashboard.jpg)
+[![PulseWatch Mission Control Dashboard](docs/assets/dashboard.jpg)](https://sakshar2303.github.io/PulseWatch/)
+<p align="center"><em>Live interactive mission control with dynamic charts, anomaly feeds, and auto-remediation playbooks: <a href="https://sakshar2303.github.io/PulseWatch/">sakshar2303.github.io/PulseWatch</a></em></p>
 
 ---
 
