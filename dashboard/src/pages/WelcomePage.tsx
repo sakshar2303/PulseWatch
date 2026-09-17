@@ -13,6 +13,7 @@ import {
 import { ActivePage } from '../components/layout/Sidebar';
 import { ConstellationCanvas } from '../components/common/ConstellationCanvas';
 import { HeroPipelineVisual } from '../components/common/HeroPipelineVisual';
+import logoImage from '../assets/logo.jpg';
 
 interface WelcomePageProps {
   onNavigate: (page: ActivePage) => void;
@@ -65,7 +66,7 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({ onNavigate }) => {
             
             {/* The Logo Image */}
             <div className="relative w-full h-full rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-pulse-coral/50 shadow-2xl transition-all duration-700 bg-black animate-[float_6s_ease-in-out_infinite] hover:scale-105 z-10">
-              <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="PulseWatch Logo" className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-opacity" />
+              <img src={logoImage} alt="PulseWatch Logo" className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-opacity" />
             </div>
 
             {/* Corner Decorative Accents */}

@@ -2,6 +2,7 @@ import { RefreshCw, ExternalLink, Search, PanelLeftClose, PanelLeftOpen } from '
 import { HealthResponse, TimeRangePreset } from '../../types';
 import { ConnectionStatus } from '../../services/websocket';
 import { TIME_RANGE_CONFIGS } from '../../hooks/useMetrics';
+import logoImage from '../../assets/logo.jpg';
 
 interface HeaderProps {
   health: HealthResponse | null;
@@ -66,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
           onKeyDown={(e) => e.key === 'Enter' && onLogoClick?.()}
         >
           <div className="w-8 h-8 rounded-lg overflow-hidden border border-pulse-coral/30 shadow-pulse-glow flex items-center justify-center bg-black">
-            <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="PulseWatch Logo" className="w-full h-full object-cover" />
+            <img src={logoImage} alt="PulseWatch Logo" className="w-full h-full object-cover" />
           </div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm tracking-tight text-white font-sans">PulseWatch</span>
