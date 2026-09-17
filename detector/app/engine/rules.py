@@ -275,6 +275,27 @@ class RulesEvaluator:
             except Exception as e:
                 log.error("Failed to save verification for anomaly %d: %s", anomaly_id, e)
 
+            # Autonomous Remediation if verified critical
+            if is_real and firing.rule.severity == "critical":
+                try:
+                    from app.engine.remediation import remediation_engine
+                    await remediation_engine.trigger(
+                        service=firing.service,
+                        host=firing.host,
+                        metric_name=firing.rule.metric_name,
+                        current_value=firing.current_value,
+                        description=firing.description,
+                        severity=firing.rule.severity,
+                        anomaly_id=anomaly_id,
+                        rca_summary=verify_result.get("reason"),
+                        trigger_type="autonomous",
+                        samples=approx_samples,
+                    )
+                    log.info("Autonomous remediation dispatched for critical threshold anomaly %d", anomaly_id)
+                except Exception as e:
+                    log.error("Failed to trigger autonomous remediation for anomaly %d: %s", anomaly_id, e)
+
+
     async def run_all(self) -> int:
         """Load all rules, evaluate each, persist firings.  Returns total firings count."""
         from app.engine.deduplicator import deduplicator

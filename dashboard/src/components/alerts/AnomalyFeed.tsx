@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Anomaly } from '../../types';
-import { resolveAnomaly } from '../../services/api';
-import { AlertOctagon, CheckCircle, Clock, Check, BrainCircuit, XCircle, ShieldCheck } from 'lucide-react';
+import { resolveAnomaly, triggerRemediation } from '../../services/api';
+import { useToast } from '../common/Toast';
+import { AlertOctagon, CheckCircle, Clock, Check, BrainCircuit, XCircle, ShieldCheck, Wrench } from 'lucide-react';
 
 interface AnomalyFeedProps {
   anomalies: Anomaly[];
@@ -14,6 +15,8 @@ export const AnomalyFeed: React.FC<AnomalyFeedProps> = ({
 }) => {
   const [filter, setFilter] = useState<'all' | 'unresolved' | 'critical'>('all');
   const [resolvingId, setResolvingId] = useState<number | null>(null);
+  const [remediatingId, setRemediatingId] = useState<number | null>(null);
+  const toast = useToast();
 
   const filtered = anomalies.filter((a) => {
     if (filter === 'unresolved') return !a.resolved_at;
@@ -25,11 +28,35 @@ export const AnomalyFeed: React.FC<AnomalyFeedProps> = ({
     setResolvingId(id);
     try {
       await resolveAnomaly(id);
+      toast.success(`Anomaly #${id} resolved successfully`);
       if (onAnomalyResolved) onAnomalyResolved(id);
     } catch (err) {
+      toast.error(`Failed to resolve anomaly #${id}`);
       console.error('Failed to resolve anomaly:', err);
     } finally {
       setResolvingId(null);
+    }
+  };
+
+  const handleRemediate = async (anomaly: Anomaly) => {
+    setRemediatingId(anomaly.id);
+    try {
+      await triggerRemediation({
+        service: anomaly.service,
+        host: anomaly.host,
+        metric_name: anomaly.metric_name,
+        current_value: anomaly.value,
+        description: anomaly.description,
+        severity: anomaly.severity,
+        anomaly_id: anomaly.id,
+        rca_summary: anomaly.rca_summary || undefined,
+      });
+      toast.info(`Auto-remediation triggered for ${anomaly.service}`);
+    } catch (err) {
+      toast.error(`Remediation failed for ${anomaly.service}`);
+      console.error('Failed to trigger remediation:', err);
+    } finally {
+      setRemediatingId(null);
     }
   };
 
@@ -179,14 +206,24 @@ export const AnomalyFeed: React.FC<AnomalyFeedProps> = ({
 
                   {/* Action */}
                   {!isResolved ? (
-                    <button
-                      onClick={() => handleResolve(anomaly.id)}
-                      disabled={resolvingId === anomaly.id}
-                      className="px-2.5 py-1 rounded bg-slate-800 hover:bg-emerald-950/60 hover:text-emerald-400 hover:border-emerald-800/40 border border-slate-750 text-[11px] font-mono text-slate-300 transition-all shrink-0 flex items-center gap-1"
-                    >
-                      <Check className="w-3 h-3" />
-                      <span>{resolvingId === anomaly.id ? 'Resolving...' : 'Resolve'}</span>
-                    </button>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <button
+                        onClick={() => handleRemediate(anomaly)}
+                        disabled={remediatingId === anomaly.id}
+                        className="px-2.5 py-1 rounded bg-pulse-blue/10 hover:bg-pulse-blue/20 hover:border-pulse-blue/50 border border-pulse-blue/30 text-[11px] font-mono text-pulse-blue transition-all flex items-center justify-center gap-1 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
+                      >
+                        <Wrench className="w-3 h-3" />
+                        <span>{remediatingId === anomaly.id ? 'Starting...' : 'Remediate'}</span>
+                      </button>
+                      <button
+                        onClick={() => handleResolve(anomaly.id)}
+                        disabled={resolvingId === anomaly.id}
+                        className="px-2.5 py-1 rounded bg-slate-800 hover:bg-emerald-950/60 hover:text-emerald-400 hover:border-emerald-800/40 border border-slate-750 text-[11px] font-mono text-slate-300 transition-all flex items-center justify-center gap-1"
+                      >
+                        <Check className="w-3 h-3" />
+                        <span>{resolvingId === anomaly.id ? 'Resolving...' : 'Resolve'}</span>
+                      </button>
+                    </div>
                   ) : (
                     <span className="text-[11px] font-mono text-emerald-400/80 px-2 py-0.5 rounded bg-emerald-950/30 border border-emerald-900/30 shrink-0">
                       Resolved

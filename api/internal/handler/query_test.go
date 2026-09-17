@@ -71,6 +71,26 @@ func (m *mockStore) ToggleAlertRule(ctx context.Context, id int64) (*store.Alert
 	return nil, m.err
 }
 
+func (m *mockStore) UpdateAnomalyRCA(ctx context.Context, id int64, rca string) error {
+	return m.err
+}
+
+func (m *mockStore) GetForecasts(ctx context.Context, metric, host, service string) ([]store.Forecast, error) {
+	return nil, m.err
+}
+
+func (m *mockStore) GetRemediations(ctx context.Context, limit int, status string, service string) ([]store.Remediation, error) {
+	return nil, m.err
+}
+
+func (m *mockStore) GetRemediation(ctx context.Context, id int64) (*store.Remediation, error) {
+	return nil, m.err
+}
+
+func (m *mockStore) GetRemediationStats(ctx context.Context) (map[string]any, error) {
+	return nil, m.err
+}
+
 func (m *mockStore) Ping(ctx context.Context) error {
 	return m.err
 }

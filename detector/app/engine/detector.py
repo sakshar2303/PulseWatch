@@ -208,7 +208,7 @@ class MLDetector:
                 return
 
         # 2. Generate RCA (only if real or verification failed to respond)
-        kwargs.pop("description", None) # remove description before passing to RCA
+        description_saved = kwargs.pop("description", None)
         rca = await generate_rca_summary(**kwargs)
         if rca:
             try:
@@ -218,6 +218,27 @@ class MLDetector:
             except Exception as e:
                 log.error("Failed to save RCA for anomaly %d: %s", anomaly_id, e)
 
+        # 3. Autonomous Remediation (if verified critical)
+        if kwargs.get("severity") == "critical":
+            try:
+                from app.engine.remediation import remediation_engine
+                await remediation_engine.trigger(
+                    service=kwargs["service"],
+                    host=kwargs["host"],
+                    metric_name=kwargs["metric"],
+                    current_value=kwargs["current_value"],
+                    description=description_saved or f"Critical ML anomaly on {kwargs['metric']}",
+                    severity=kwargs["severity"],
+                    anomaly_id=anomaly_id,
+                    rca_summary=rca,
+                    trigger_type="autonomous",
+                    samples=kwargs.get("samples"),
+                )
+                log.info("Autonomous remediation dispatched for critical ML anomaly %d", anomaly_id)
+            except Exception as e:
+                log.error("Failed to trigger autonomous remediation for anomaly %d: %s", anomaly_id, e)
+
 
 # Module-level singleton
 ml_detector = MLDetector()
+

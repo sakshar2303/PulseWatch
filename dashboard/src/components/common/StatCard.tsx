@@ -14,7 +14,7 @@ interface StatCardProps {
   };
 }
 
-export const StatCard: React.FC<StatCardProps> = ({
+export const StatCard: React.FC<StatCardProps> = React.memo(function StatCard({
   title,
   value,
   unit,
@@ -22,7 +22,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon: Icon,
   color = 'cyan',
   trend,
-}) => {
+}) {
   const colorMap = {
     cyan: {
       border: 'hover:border-neon-cyan/40',
@@ -82,4 +82,4 @@ export const StatCard: React.FC<StatCardProps> = ({
       </div>
     </div>
   );
-};
+});

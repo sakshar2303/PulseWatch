@@ -82,4 +82,30 @@ export interface TimeRangeConfig {
   defaultStep: string;
 }
 
+export interface Remediation {
+  id: number;
+  anomaly_id?: number;
+  service: string;
+  host: string;
+  metric_name: string;
+  action_type: string;
+  status: 'pending' | 'analyzing' | 'executing' | 'success' | 'failed' | 'rolled_back';
+  trigger_type: 'autonomous' | 'manual';
+  llm_plan?: string;
+  action_payload?: Record<string, any>;
+  execution_log?: string;
+  metric_before?: number;
+  metric_after?: number;
+  created_at: string;
+  executed_at?: string;
+  completed_at?: string;
+}
+
+export interface RemediationStats {
+  total_remediations: number;
+  success_rate: number;
+  autonomous_count: number;
+  last_24h: number;
+}
+
 export * from './telemetry';

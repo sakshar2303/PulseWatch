@@ -62,6 +62,7 @@ func main() {
 	forecastHandler := handler.NewForecastHandler(dbStore)
 	wsHandler := websocket.NewHandler(wsHub)
 	nlQueryHandler := handler.NewNLQueryHandler(cfg.AnthropicAPIKey)
+	remediationHandler := handler.NewRemediationHandler(dbStore)
 
 	// Pre-load metric names for AI schema context (best-effort)
 	if metricNames, err := dbStore.GetMetricNames(ctx); err == nil {
@@ -94,6 +95,10 @@ func main() {
 	mux.HandleFunc("GET /api/v1/slo", sloHandler.HandleSLO)
 	mux.HandleFunc("GET /api/v1/forecasts", forecastHandler.HandleForecasts)
 	mux.HandleFunc("POST /api/v1/ai/nl-query", nlQueryHandler.HandleNLQuery)
+	mux.HandleFunc("GET /api/v1/remediations", remediationHandler.HandleList)
+	mux.HandleFunc("GET /api/v1/remediations/stats", remediationHandler.HandleStats)
+	mux.HandleFunc("GET /api/v1/remediations/{id}", remediationHandler.HandleGet)
+	mux.HandleFunc("POST /api/v1/remediations/trigger", remediationHandler.HandleTrigger)
 
 	// Wrap router with middleware chain: tracing → SLI → CORS → handler
 	tracingMiddleware := middleware.Tracing()

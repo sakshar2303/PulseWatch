@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { HostInfo, ServiceInfo } from '../../types';
 
-export type ActivePage = 'welcome' | 'overview' | 'checkpoints' | 'topology' | 'slo' | 'audit' | 'live' | 'explorer' | 'fleet' | 'anomalies' | 'diagnostics' | 'chaos';
+export type ActivePage = 'welcome' | 'overview' | 'checkpoints' | 'topology' | 'slo' | 'audit' | 'live' | 'explorer' | 'fleet' | 'anomalies' | 'diagnostics' | 'chaos' | 'remediation';
 
 interface SidebarProps {
   activePage: ActivePage;
@@ -63,6 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: AlertOctagon,
       alertBadge: unresolvedAnomalyCount,
     },
+    { id: 'remediation', label: 'Auto-Remediation', icon: ShieldCheck, badgeText: 'AI' },
   ];
 
   return (

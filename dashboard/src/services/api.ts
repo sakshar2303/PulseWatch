@@ -4,6 +4,8 @@ import {
   HostInfo,
   AnomaliesResponse,
   HealthResponse,
+  Remediation,
+  RemediationStats,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -160,4 +162,54 @@ export async function fetchForecasts(metric: string, host: string, service: stri
   }
   const data = await res.json();
   return data.forecasts || [];
+}
+
+export async function fetchRemediations(limit = 50, status?: string, service?: string): Promise<Remediation[]> {
+  const url = new URL(`${API_BASE}/remediations`, window.location.origin);
+  url.searchParams.set('limit', limit.toString());
+  if (status) url.searchParams.set('status', status);
+  if (service) url.searchParams.set('service', service);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    throw new Error(`Failed to fetch remediations: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function fetchRemediationStats(): Promise<RemediationStats> {
+  const res = await fetch(`${API_BASE}/remediations/stats`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch remediation stats: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function fetchRemediation(id: number): Promise<Remediation> {
+  const res = await fetch(`${API_BASE}/remediations/${id}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch remediation ${id}: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function triggerRemediation(payload: {
+  service: string;
+  host: string;
+  metric_name: string;
+  current_value: number;
+  description: string;
+  severity: string;
+  anomaly_id?: number;
+  rca_summary?: string;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE}/remediations/trigger`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to trigger remediation: ${res.statusText}`);
+  }
+  return res.json();
 }

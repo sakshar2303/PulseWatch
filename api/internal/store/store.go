@@ -78,6 +78,26 @@ type Forecast struct {
 	ModelType      string    `json:"model_type"`
 }
 
+// Remediation represents an automated or manual SRE action.
+type Remediation struct {
+	ID            int64          `json:"id"`
+	AnomalyID     *int64         `json:"anomaly_id,omitempty"`
+	Service       string         `json:"service"`
+	Host          string         `json:"host"`
+	MetricName    string         `json:"metric_name"`
+	ActionType    string         `json:"action_type"`
+	Status        string         `json:"status"`
+	TriggerType   string         `json:"trigger_type"`
+	LLMPlan       *string        `json:"llm_plan,omitempty"`
+	ActionPayload map[string]any `json:"action_payload"`
+	ExecutionLog  *string        `json:"execution_log,omitempty"`
+	MetricBefore  *float64       `json:"metric_before,omitempty"`
+	MetricAfter   *float64       `json:"metric_after,omitempty"`
+	CreatedAt     time.Time      `json:"created_at"`
+	ExecutedAt    *time.Time     `json:"executed_at,omitempty"`
+	CompletedAt   *time.Time     `json:"completed_at,omitempty"`
+}
+
 // AlertRule represents a user-defined threshold alerting rule.
 type AlertRule struct {
 	ID         int64     `json:"id"`
@@ -111,6 +131,9 @@ type Store interface {
 	DeleteAlertRule(ctx context.Context, id int64) error
 	ToggleAlertRule(ctx context.Context, id int64) (*AlertRule, error)
 	GetForecasts(ctx context.Context, metric, host, service string) ([]Forecast, error)
+	GetRemediations(ctx context.Context, limit int, status string, service string) ([]Remediation, error)
+	GetRemediation(ctx context.Context, id int64) (*Remediation, error)
+	GetRemediationStats(ctx context.Context) (map[string]any, error)
 	Ping(ctx context.Context) error
 	Close()
 }
@@ -712,3 +735,103 @@ func (s *PgxStore) GetForecasts(ctx context.Context, metric, host, service strin
 	return forecasts, nil
 }
 
+// GetRemediations lists recent remediations with optional filters.
+func (s *PgxStore) GetRemediations(ctx context.Context, limit int, status string, service string) ([]Remediation, error) {
+	query := `
+		SELECT id, anomaly_id, service, host, metric_name, action_type, status, trigger_type, 
+		       llm_plan, action_payload, execution_log, metric_before, metric_after, created_at, executed_at, completed_at
+		FROM remediations
+		WHERE ($1::text = '' OR status = $1)
+		  AND ($2::text = '' OR service = $2)
+		ORDER BY created_at DESC
+		LIMIT $3;
+	`
+	rows, err := s.pool.Query(ctx, query, status, service, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list remediations: %w", err)
+	}
+	defer rows.Close()
+
+	var results []Remediation
+	for rows.Next() {
+		var r Remediation
+		if err := rows.Scan(
+			&r.ID, &r.AnomalyID, &r.Service, &r.Host, &r.MetricName, &r.ActionType, &r.Status, &r.TriggerType,
+			&r.LLMPlan, &r.ActionPayload, &r.ExecutionLog, &r.MetricBefore, &r.MetricAfter,
+			&r.CreatedAt, &r.ExecutedAt, &r.CompletedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan remediation: %w", err)
+		}
+		r.CreatedAt = r.CreatedAt.UTC()
+		if r.ExecutedAt != nil {
+			t := r.ExecutedAt.UTC()
+			r.ExecutedAt = &t
+		}
+		if r.CompletedAt != nil {
+			t := r.CompletedAt.UTC()
+			r.CompletedAt = &t
+		}
+		results = append(results, r)
+	}
+	if results == nil {
+		results = []Remediation{}
+	}
+	return results, nil
+}
+
+// GetRemediation gets a single remediation by ID.
+func (s *PgxStore) GetRemediation(ctx context.Context, id int64) (*Remediation, error) {
+	query := `
+		SELECT id, anomaly_id, service, host, metric_name, action_type, status, trigger_type, 
+		       llm_plan, action_payload, execution_log, metric_before, metric_after, created_at, executed_at, completed_at
+		FROM remediations
+		WHERE id = $1;
+	`
+	var r Remediation
+	if err := s.pool.QueryRow(ctx, query, id).Scan(
+		&r.ID, &r.AnomalyID, &r.Service, &r.Host, &r.MetricName, &r.ActionType, &r.Status, &r.TriggerType,
+		&r.LLMPlan, &r.ActionPayload, &r.ExecutionLog, &r.MetricBefore, &r.MetricAfter,
+		&r.CreatedAt, &r.ExecutedAt, &r.CompletedAt,
+	); err != nil {
+		return nil, fmt.Errorf("failed to get remediation %d: %w", id, err)
+	}
+	r.CreatedAt = r.CreatedAt.UTC()
+	if r.ExecutedAt != nil {
+		t := r.ExecutedAt.UTC()
+		r.ExecutedAt = &t
+	}
+	if r.CompletedAt != nil {
+		t := r.CompletedAt.UTC()
+		r.CompletedAt = &t
+	}
+	return &r, nil
+}
+
+// GetRemediationStats returns high-level metrics about the auto-remediation system.
+func (s *PgxStore) GetRemediationStats(ctx context.Context) (map[string]any, error) {
+	query := `
+		SELECT 
+			COUNT(*) AS total,
+			COUNT(*) FILTER (WHERE status = 'success') AS success_count,
+			COUNT(*) FILTER (WHERE trigger_type = 'autonomous') AS autonomous_count,
+			COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours') AS last_24h
+		FROM remediations;
+	`
+	var total, success, autonomous, last24h int
+	err := s.pool.QueryRow(ctx, query).Scan(&total, &success, &autonomous, &last24h)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get remediation stats: %w", err)
+	}
+	
+	successRate := 0.0
+	if total > 0 {
+		successRate = (float64(success) / float64(total)) * 100.0
+	}
+	
+	return map[string]any{
+		"total_remediations": total,
+		"success_rate": successRate,
+		"autonomous_count": autonomous,
+		"last_24h": last24h,
+	}, nil
+}

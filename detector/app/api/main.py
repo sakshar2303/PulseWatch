@@ -213,3 +213,38 @@ async def list_rules() -> List[Dict[str, Any]]:
         }
         for r in rules
     ]
+
+
+# ---------------------------------------------------------------------------
+# /api/v1/remediate/trigger — trigger remediation on demand
+# ---------------------------------------------------------------------------
+
+class RemediateRequest(BaseModel):
+    service: str
+    host: str
+    metric_name: str
+    current_value: float = 0.0
+    description: str = "Manual operator remediation trigger"
+    severity: str = "warning"
+    anomaly_id: Optional[int] = None
+    rca_summary: Optional[str] = None
+    trigger_type: str = "manual"
+
+
+@app.post("/api/v1/remediate/trigger", tags=["remediation"])
+async def trigger_remediation(req: RemediateRequest) -> Dict[str, Any]:
+    """Trigger an autonomous or manual self-healing remediation workflow."""
+    from app.engine.remediation import remediation_engine
+    rem_id = await remediation_engine.trigger(
+        service=req.service,
+        host=req.host,
+        metric_name=req.metric_name,
+        current_value=req.current_value,
+        description=req.description,
+        severity=req.severity,
+        anomaly_id=req.anomaly_id,
+        rca_summary=req.rca_summary,
+        trigger_type=req.trigger_type,
+    )
+    return {"status": "dispatched", "remediation_id": rem_id}
+

@@ -36,7 +36,7 @@ interface MetricChartProps {
   formatter?: (val: number) => string;
 }
 
-export const MetricChart: React.FC<MetricChartProps> = ({
+export const MetricChart: React.FC<MetricChartProps> = React.memo(function MetricChart({
   title,
   data,
   forecasts = [],
@@ -48,7 +48,7 @@ export const MetricChart: React.FC<MetricChartProps> = ({
   threshold,
   height = 260,
   formatter,
-}) => {
+}) {
   // Transform SeriesResult[] into flat array of { time: string, [host]: number }
   const { chartData, seriesKeys } = useMemo(() => {
     if ((!data || !data.series || data.series.length === 0) && forecasts.length === 0) {
@@ -279,4 +279,4 @@ export const MetricChart: React.FC<MetricChartProps> = ({
       </div>
     </div>
   );
-};
+});
