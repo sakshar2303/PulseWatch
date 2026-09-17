@@ -3,7 +3,7 @@
 
 <div align="center">
 
-[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-PulseWatch%20Mission%20Control-00f0ff?style=for-the-badge&logo=vercel&logoColor=white)](https://sakshar2303.github.io/PulseWatch/)
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-PulseWatch%20Mission%20Control-00f0ff?style=for-the-badge&logo=github&logoColor=white)](https://sakshar2303.github.io/PulseWatch/)
 
 </div>
 
